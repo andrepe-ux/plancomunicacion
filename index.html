@@ -2,27 +2,37 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>Hoja de Ruta 2027 · Plan de Comunicación RRHH</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/konva@9.3.16/konva.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
+        html, body {
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: contain;
+        }
         dialog::backdrop {
             background: rgba(15, 23, 42, 0.65);
             backdrop-filter: blur(4px);
         }
         dialog[open] {
-            animation: modalFadeIn 0.18s ease-out;
+            animation: modalFadeIn 0.16s ease-out;
         }
         @keyframes modalFadeIn {
-            from { opacity: 0; transform: scale(0.97) translateY(6px); }
+            from { opacity: 0; transform: scale(0.98) translateY(6px); }
             to { opacity: 1; transform: scale(1) translateY(0); }
         }
         #konva-tooltip {
-            will-change: transform;
-            transition: opacity 0.12s ease;
+            will-change: transform, opacity;
+            transition: opacity 0.1s ease;
         }
+        #canvas-wrapper {
+            -webkit-overflow-scrolling: touch;
+            contain: content;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         ::-webkit-scrollbar { height: 8px; width: 8px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
@@ -33,94 +43,108 @@
 
     <!-- Top Navbar -->
     <header class="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-30">
-        <div class="max-w-[1680px] mx-auto px-4 py-3.5 flex flex-wrap items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg">
-                    <i class="fa-solid fa-diagram-project text-white text-lg"></i>
+        <div class="max-w-[1680px] mx-auto px-3 sm:px-4 py-2.5 sm:py-3.5 flex flex-wrap items-center justify-between gap-2.5 sm:gap-4">
+            <div class="flex items-center gap-2.5 sm:gap-3">
+                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shrink-0">
+                    <i class="fa-solid fa-diagram-project text-white text-base sm:text-lg"></i>
                 </div>
                 <div>
-                    <div class="flex items-center gap-2 text-[11px] uppercase tracking-widest text-emerald-400 font-bold">
+                    <div class="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-[11px] uppercase tracking-widest text-emerald-400 font-bold">
                         <span>División Proceso RRHH</span>
                         <span>•</span>
-                        <span>Hoja de Ruta 2027</span>
+                        <span>HdR 2027</span>
+                        <span id="device-badge" class="hidden sm:inline-flex items-center px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 border border-slate-700 font-mono text-[10px]"></span>
                     </div>
-                    <h1 class="text-lg md:text-xl font-bold tracking-tight">Plan de Comunicación</h1>
+                    <h1 class="text-base sm:text-xl font-bold tracking-tight leading-tight">Plan de Comunicación</h1>
                 </div>
             </div>
 
             <!-- Ações Rápidas e Filtro de Grupo no Canvas -->
-            <div class="flex flex-wrap items-center gap-2.5">
-                <div class="flex items-center bg-slate-800 rounded-lg p-1 border border-slate-700 text-xs">
-                    <span class="px-2 text-slate-400 font-medium">Destacar grupo:</span>
-                    <button onclick="setHighlightGrupo('ALL')" data-gbtn="ALL" class="gbtn px-2.5 py-1 rounded bg-emerald-600 text-white font-semibold transition">Todos</button>
-                    <button onclick="setHighlightGrupo('MD')" data-gbtn="MD" class="gbtn px-2.5 py-1 rounded text-slate-300 hover:text-white transition">MD</button>
-                    <button onclick="setHighlightGrupo('MD + JJ')" data-gbtn="MD + JJ" class="gbtn px-2.5 py-1 rounded text-slate-300 hover:text-white transition">MD+JJ</button>
-                    <button onclick="setHighlightGrupo('Propietarios')" data-gbtn="Propietarios" class="gbtn px-2.5 py-1 rounded text-slate-300 hover:text-white transition">Propietarios</button>
-                    <button onclick="setHighlightGrupo('CdM')" data-gbtn="CdM" class="gbtn px-2.5 py-1 rounded text-slate-300 hover:text-white transition">CdM</button>
+            <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-between lg:justify-end">
+                <div class="flex items-center bg-slate-800 rounded-lg p-1 border border-slate-700 text-xs overflow-x-auto no-scrollbar max-w-full">
+                    <span class="px-2 text-slate-400 font-medium hidden sm:inline shrink-0">Grupo:</span>
+                    <button onclick="setHighlightGrupo('ALL')" data-gbtn="ALL" class="gbtn px-2.5 py-1.5 sm:py-1 rounded bg-emerald-600 text-white font-semibold transition shrink-0">Todos</button>
+                    <button onclick="setHighlightGrupo('MD')" data-gbtn="MD" class="gbtn px-2.5 py-1.5 sm:py-1 rounded text-slate-300 hover:text-white transition shrink-0">MD</button>
+                    <button onclick="setHighlightGrupo('MD + JJ')" data-gbtn="MD + JJ" class="gbtn px-2.5 py-1.5 sm:py-1 rounded text-slate-300 hover:text-white transition shrink-0">MD+JJ</button>
+                    <button onclick="setHighlightGrupo('Propietarios')" data-gbtn="Propietarios" class="gbtn px-2.5 py-1.5 sm:py-1 rounded text-slate-300 hover:text-white transition shrink-0">Propietarios</button>
+                    <button onclick="setHighlightGrupo('CdM')" data-gbtn="CdM" class="gbtn px-2.5 py-1.5 sm:py-1 rounded text-slate-300 hover:text-white transition shrink-0">CdM</button>
                 </div>
 
-                <button onclick="openRadarModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition">
-                    <i class="fa-solid fa-calendar-week text-amber-400"></i> Radar Semanal
-                </button>
+                <div class="flex items-center gap-1.5 sm:gap-2">
+                    <button onclick="openRadarModal()" class="bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-100 border border-slate-700 px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-calendar-week text-amber-400"></i>
+                        <span>Radar</span>
+                    </button>
 
-                <button onclick="openNewBloqueModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition">
-                    <i class="fa-solid fa-layer-group text-sky-400"></i> Nuevo Bloque
-                </button>
+                    <button onclick="openNewBloqueModal()" class="bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-100 border border-slate-700 px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-layer-group text-sky-400"></i>
+                        <span class="hidden sm:inline">Nuevo Bloque</span>
+                        <span class="sm:hidden">Bloque</span>
+                    </button>
 
-                <button onclick="openNewLineaModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 shadow-sm transition">
-                    <i class="fa-solid fa-plus"></i> Nueva Línea HdR
-                </button>
+                    <button onclick="openNewLineaModal()" class="bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white px-3 sm:px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition">
+                        <i class="fa-solid fa-plus"></i>
+                        <span class="hidden sm:inline">Nueva Línea HdR</span>
+                        <span class="sm:hidden">Línea</span>
+                    </button>
+                </div>
             </div>
         </div>
     </header>
 
-    <!-- Legenda Dinâmica e Instruções -->
-    <div class="max-w-[1680px] w-full mx-auto px-4 pt-4 pb-2 flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div id="bloques-legend" class="flex flex-wrap items-center gap-4 bg-white px-3.5 py-2 rounded-lg border border-slate-200 shadow-2xs">
-            <span class="font-bold text-slate-600 uppercase tracking-wider text-[11px]">Bloques:</span>
+    <!-- Filtro por Bloques Dinámico e Instruções -->
+    <div class="max-w-[1680px] w-full mx-auto px-3 sm:px-4 pt-3 sm:pt-4 pb-2 flex flex-wrap items-center justify-between gap-2.5 text-xs">
+        <div id="bloques-legend" class="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-slate-200 shadow-2xs overflow-x-auto no-scrollbar max-w-full">
+            <span class="font-bold text-slate-600 uppercase tracking-wider text-[11px] mr-1 shrink-0">Bloque:</span>
         </div>
 
-        <div class="flex items-center gap-3 text-slate-600 bg-white px-3.5 py-2 rounded-lg border border-slate-200 shadow-2xs">
-            <i class="fa-solid fa-computer-mouse text-emerald-600"></i>
-            <span><strong>Clic en la barra</strong> para seleccionar grupos y semanas · <strong>Iconos ✎ / ✕</strong> para editar o eliminar línea.</span>
-            <span id="sync-status" class="ml-2 px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-semibold border border-amber-200">
+        <div class="flex flex-wrap items-center gap-2.5 text-slate-600 bg-white px-3 py-2 rounded-lg border border-slate-200 shadow-2xs w-full xl:w-auto justify-between xl:justify-end">
+            <div class="flex items-center gap-2.5 flex-wrap">
+                <span class="flex items-center gap-1.5">
+                    <span class="inline-block w-3 h-3 rounded-full bg-emerald-500 border border-white shadow-xs"></span>
+                    <strong id="hint-circle">Clic en círculo: ejecutada</strong>
+                </span>
+                <span class="text-slate-300">|</span>
+                <span id="hint-bar"><strong>Clic en barra:</strong> editar</span>
+            </div>
+            <span id="sync-status" class="px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-semibold border border-amber-200 shrink-0">
                 <i class="fa-solid fa-spinner fa-spin mr-1"></i>Conectando...
             </span>
         </div>
     </div>
 
     <!-- Container Principal do Konva Canvas -->
-    <main class="max-w-[1680px] w-full mx-auto px-4 pb-8 flex-1">
+    <main class="max-w-[1680px] w-full mx-auto px-3 sm:px-4 pb-8 flex-1">
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto relative" id="canvas-wrapper">
             <div id="konva-container"></div>
         </div>
     </main>
 
-    <!-- Tooltip flutuante otimizado (GPU transform) -->
+    <!-- Tooltip flutuante otimizado (GPU transform - apenas para desktop com rato) -->
     <div id="konva-tooltip" class="fixed top-0 left-0 pointer-events-none opacity-0 z-50 bg-slate-900/95 text-white text-xs rounded-lg px-3 py-2 shadow-xl border border-slate-700 max-w-sm"></div>
 
     <!-- ===================================================================== -->
     <!-- MODAL 1: CONFIGURADOR DE COMUNICACIONES POR LÍNEA (GRUPOS Y RANGO)    -->
     <!-- ===================================================================== -->
-    <dialog id="modal-comunicacion" class="rounded-2xl shadow-2xl border border-slate-200 p-0 w-full max-w-5xl bg-white text-slate-800">
-        <div class="bg-slate-900 text-white px-6 py-4 flex flex-wrap items-center justify-between gap-3">
-            <div>
-                <div class="flex items-center gap-2">
+    <dialog id="modal-comunicacion" class="rounded-2xl shadow-2xl border border-slate-200 p-0 w-[96vw] max-w-5xl bg-white text-slate-800">
+        <div class="bg-slate-900 text-white px-4 sm:px-6 py-3.5 sm:py-4 flex flex-wrap items-center justify-between gap-3">
+            <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-center gap-2">
                     <span id="mc-bloque-badge" class="text-[11px] font-bold uppercase px-2.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"></span>
                     <span id="mc-periodo-badge" class="text-xs font-mono text-amber-300 font-semibold"></span>
                 </div>
-                <h2 id="mc-titulo" class="text-lg md:text-xl font-bold mt-1">Título de la línea</h2>
+                <h2 id="mc-titulo" class="text-base sm:text-xl font-bold mt-1 truncate">Título de la línea</h2>
             </div>
-            <div class="flex items-center gap-2">
-                <label class="flex items-center gap-1.5 text-xs bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700 cursor-pointer select-none">
+            <div class="flex flex-wrap items-center gap-2">
+                <label class="flex items-center gap-1.5 text-xs bg-slate-800 px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-700 cursor-pointer select-none">
                     <input type="checkbox" id="mc-only-range" checked onchange="rerenderModalBody()" class="accent-emerald-500 rounded">
-                    <span>Mostrar solo semanas del rango</span>
+                    <span>Solo rango</span>
                 </label>
-                <button onclick="openEditLineaModal(activeLineaId)" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700 transition">
-                    <i class="fa-solid fa-pen mr-1"></i> Editar Línea
+                <button onclick="openEditLineaModal(activeLineaId)" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-700 transition">
+                    <i class="fa-solid fa-pen sm:mr-1"></i><span class="hidden sm:inline">Editar</span>
                 </button>
-                <button onclick="deleteLineaById(activeLineaId)" class="text-xs bg-rose-950/80 hover:bg-rose-900 text-rose-200 px-3 py-1.5 rounded-lg border border-rose-800 transition">
-                    <i class="fa-solid fa-trash mr-1"></i> Eliminar
+                <button onclick="deleteLineaById(activeLineaId)" class="text-xs bg-rose-950/80 hover:bg-rose-900 text-rose-200 px-2.5 sm:px-3 py-1.5 rounded-lg border border-rose-800 transition">
+                    <i class="fa-solid fa-trash sm:mr-1"></i><span class="hidden sm:inline">Eliminar</span>
                 </button>
                 <button onclick="document.getElementById('modal-comunicacion').close()" class="text-slate-400 hover:text-white p-1.5 ml-1">
                     <i class="fa-solid fa-xmark text-xl"></i>
@@ -128,24 +152,24 @@
             </div>
         </div>
 
-        <div class="bg-slate-100 px-6 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
-            <span class="text-xs font-bold uppercase text-slate-600">1. Selecciona los grupos a comunicar en esta línea:</span>
+        <div class="bg-slate-100 px-4 sm:px-6 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2.5">
+            <span class="text-xs font-bold uppercase text-slate-600">1. Grupos a comunicar:</span>
             <div class="flex flex-wrap items-center gap-2" id="mc-group-pills"></div>
         </div>
 
-        <div class="p-6 max-h-[68vh] overflow-y-auto space-y-4" id="mc-body"></div>
+        <div class="p-4 sm:p-6 max-h-[65vh] overflow-y-auto space-y-4" id="mc-body"></div>
 
-        <div class="bg-slate-50 px-6 py-3.5 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+        <div class="bg-slate-50 px-4 sm:px-6 py-3.5 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
             <div class="text-xs text-slate-500">
-                <span class="inline-block w-3 h-3 rounded bg-indigo-600 align-middle mr-1"></span> Semana programada
-                <span class="inline-block w-3 h-3 rounded bg-emerald-600 align-middle ml-3 mr-1"></span> Ya comunicada (clic derecho en semana)
+                <span class="inline-block w-3 h-3 rounded bg-indigo-600 align-middle mr-1"></span> Programada
+                <span class="inline-block w-3 h-3 rounded bg-emerald-600 align-middle ml-3 mr-1"></span> Ejecutada <span id="mc-done-hint">(clic derecho)</span>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 ml-auto">
                 <button onclick="document.getElementById('modal-comunicacion').close()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-lg transition">
                     Cancelar
                 </button>
                 <button onclick="saveAllComunicacionesModal()" id="btn-save-mc" class="px-5 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg shadow-sm flex items-center gap-2 transition">
-                    <i class="fa-solid fa-floppy-disk"></i> Guardar en Supabase
+                    <i class="fa-solid fa-floppy-disk"></i> Guardar
                 </button>
             </div>
         </div>
@@ -154,14 +178,14 @@
     <!-- ===================================================================== -->
     <!-- MODAL 2: CREAR / EDITAR LÍNEA DE LA HOJA DE RUTA                      -->
     <!-- ===================================================================== -->
-    <dialog id="modal-linea" class="rounded-2xl shadow-2xl border border-slate-200 p-0 w-full max-w-lg bg-white text-slate-800">
-        <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+    <dialog id="modal-linea" class="rounded-2xl shadow-2xl border border-slate-200 p-0 w-[94vw] max-w-lg bg-white text-slate-800">
+        <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
             <h3 id="ml-title" class="font-bold text-base">Nueva Línea en Hoja de Ruta 2027</h3>
-            <button onclick="document.getElementById('modal-linea').close()" class="text-slate-400 hover:text-white">
+            <button onclick="document.getElementById('modal-linea').close()" class="text-slate-400 hover:text-white p-1">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
         </div>
-        <form id="form-linea" onsubmit="submitLineaForm(event)" class="p-6 space-y-4">
+        <form id="form-linea" onsubmit="submitLineaForm(event)" class="p-5 sm:p-6 space-y-4">
             <input type="hidden" id="ml-id">
             <div>
                 <div class="flex items-center justify-between mb-1">
@@ -170,25 +194,25 @@
                         <i class="fa-solid fa-plus mr-0.5"></i> Crear nuevo bloque
                     </button>
                 </div>
-                <select id="ml-bloque" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-slate-50 focus:ring-2 focus:ring-slate-800 outline-none"></select>
+                <select id="ml-bloque" required class="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm bg-slate-50 focus:ring-2 focus:ring-slate-800 outline-none"></select>
             </div>
             <div>
                 <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Nombre de la Línea / Proyecto</label>
-                <input type="text" id="ml-linea" required placeholder="Ej: Auditoría interna de contratos" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-800 outline-none">
+                <input type="text" id="ml-linea" required placeholder="Ej: Auditoría interna de contratos" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-slate-800 outline-none">
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Semana Inicio (ISO)</label>
-                    <input type="number" id="ml-inicio" min="1" max="52" value="1" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm font-mono">
+                    <input type="number" id="ml-inicio" min="1" max="52" value="1" required class="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm font-mono">
                 </div>
                 <div>
                     <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Semana Fin (ISO)</label>
-                    <input type="number" id="ml-fin" min="1" max="52" value="26" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm font-mono">
+                    <input type="number" id="ml-fin" min="1" max="52" value="26" required class="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm font-mono">
                 </div>
             </div>
             <div class="flex items-center justify-between pt-4 border-t border-slate-100">
                 <button type="button" id="btn-delete-linea" onclick="deleteCurrentLineaFromForm()" class="hidden text-xs font-semibold text-rose-600 hover:bg-rose-50 px-3 py-2 rounded-lg">
-                    <i class="fa-solid fa-trash mr-1"></i> Eliminar línea
+                    <i class="fa-solid fa-trash mr-1"></i> Eliminar
                 </button>
                 <div class="flex gap-2 ml-auto">
                     <button type="button" onclick="document.getElementById('modal-linea').close()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
@@ -201,30 +225,30 @@
     <!-- ===================================================================== -->
     <!-- MODAL 4: CREAR NUEVO BLOQUE TEMÁTICO                                  -->
     <!-- ===================================================================== -->
-    <dialog id="modal-bloque" class="rounded-2xl shadow-2xl border border-slate-200 p-0 w-full max-w-md bg-white text-slate-800">
-        <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+    <dialog id="modal-bloque" class="rounded-2xl shadow-2xl border border-slate-200 p-0 w-[94vw] max-w-md bg-white text-slate-800">
+        <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
             <h3 class="font-bold text-base"><i class="fa-solid fa-layer-group text-sky-400 mr-2"></i>Nuevo Bloque Temático</h3>
-            <button onclick="document.getElementById('modal-bloque').close()" class="text-slate-400 hover:text-white">
+            <button onclick="document.getElementById('modal-bloque').close()" class="text-slate-400 hover:text-white p-1">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
         </div>
-        <form onsubmit="submitBloqueForm(event)" class="p-6 space-y-4">
+        <form onsubmit="submitBloqueForm(event)" class="p-5 sm:p-6 space-y-4">
             <input type="hidden" id="mb-from-linea" value="0">
             <div>
                 <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Nombre del Bloque</label>
-                <input type="text" id="mb-nombre" required placeholder="Ej: Formación Continua / PRL" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-800 outline-none">
+                <input type="text" id="mb-nombre" required placeholder="Ej: Formación Continua / PRL" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-slate-800 outline-none">
             </div>
             <div>
                 <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Color Identificativo</label>
                 <div class="flex items-center gap-3">
-                    <input type="color" id="mb-color" value="#0891b2" class="w-12 h-9 rounded border border-slate-300 cursor-pointer">
-                    <div class="flex flex-wrap gap-1.5">
-                        <button type="button" onclick="document.getElementById('mb-color').value='#0891b2'" class="w-6 h-6 rounded-full bg-[#0891b2] border border-white shadow"></button>
-                        <button type="button" onclick="document.getElementById('mb-color').value='#4f46e5'" class="w-6 h-6 rounded-full bg-[#4f46e5] border border-white shadow"></button>
-                        <button type="button" onclick="document.getElementById('mb-color').value='#0d9488'" class="w-6 h-6 rounded-full bg-[#0d9488] border border-white shadow"></button>
-                        <button type="button" onclick="document.getElementById('mb-color').value='#ea580c'" class="w-6 h-6 rounded-full bg-[#ea580c] border border-white shadow"></button>
-                        <button type="button" onclick="document.getElementById('mb-color').value='#db2777'" class="w-6 h-6 rounded-full bg-[#db2777] border border-white shadow"></button>
-                        <button type="button" onclick="document.getElementById('mb-color').value='#475569'" class="w-6 h-6 rounded-full bg-[#475569] border border-white shadow"></button>
+                    <input type="color" id="mb-color" value="#0891b2" class="w-12 h-10 rounded border border-slate-300 cursor-pointer">
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" onclick="document.getElementById('mb-color').value='#0891b2'" class="w-7 h-7 rounded-full bg-[#0891b2] border border-white shadow"></button>
+                        <button type="button" onclick="document.getElementById('mb-color').value='#4f46e5'" class="w-7 h-7 rounded-full bg-[#4f46e5] border border-white shadow"></button>
+                        <button type="button" onclick="document.getElementById('mb-color').value='#0d9488'" class="w-7 h-7 rounded-full bg-[#0d9488] border border-white shadow"></button>
+                        <button type="button" onclick="document.getElementById('mb-color').value='#ea580c'" class="w-7 h-7 rounded-full bg-[#ea580c] border border-white shadow"></button>
+                        <button type="button" onclick="document.getElementById('mb-color').value='#db2777'" class="w-7 h-7 rounded-full bg-[#db2777] border border-white shadow"></button>
+                        <button type="button" onclick="document.getElementById('mb-color').value='#475569'" class="w-7 h-7 rounded-full bg-[#475569] border border-white shadow"></button>
                     </div>
                 </div>
             </div>
@@ -238,23 +262,23 @@
     <!-- ===================================================================== -->
     <!-- MODAL 3: RADAR SEMANAL (¿QUÉ COMUNICAR EN CADA SEMANA ISO?)           -->
     <!-- ===================================================================== -->
-    <dialog id="modal-radar" class="rounded-2xl shadow-2xl border border-slate-200 p-0 w-full max-w-4xl bg-white text-slate-800">
-        <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+    <dialog id="modal-radar" class="rounded-2xl shadow-2xl border border-slate-200 p-0 w-[96vw] max-w-4xl bg-white text-slate-800">
+        <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <i class="fa-solid fa-radar text-amber-400 text-lg"></i>
                 <div>
                     <h3 class="font-bold text-base">Radar de Comunicaciones por Semana ISO</h3>
-                    <p class="text-xs text-slate-400">Consulta qué mensajes salen y a qué grupo en cualquier semana del año</p>
+                    <p class="text-xs text-slate-400 hidden sm:block">Consulta qué mensajes salen y a qué grupo en cualquier semana del año</p>
                 </div>
             </div>
-            <button onclick="document.getElementById('modal-radar').close()" class="text-slate-400 hover:text-white">
+            <button onclick="document.getElementById('modal-radar').close()" class="text-slate-400 hover:text-white p-1">
                 <i class="fa-solid fa-xmark text-xl"></i>
             </button>
         </div>
-        <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
-            <div class="flex flex-wrap items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
-                <label class="text-xs font-bold uppercase text-slate-600">Seleccionar Semana ISO:</label>
-                <select id="radar-week-select" onchange="renderRadarContent()" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm font-mono font-bold bg-white"></select>
+        <div class="p-4 sm:p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+            <div class="flex flex-wrap items-center gap-2.5 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                <label class="text-xs font-bold uppercase text-slate-600">Semana ISO:</label>
+                <select id="radar-week-select" onchange="renderRadarContent()" class="border border-slate-300 rounded-lg px-3 py-2 text-sm font-mono font-bold bg-white"></select>
                 <span id="radar-count" class="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 ml-auto"></span>
             </div>
             <div id="radar-list" class="space-y-2.5"></div>
@@ -264,19 +288,77 @@
     <script type="module">
         import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+        // Otimizar Konva para máxima fluidez (evita renderizar a 3x/4x DPR em Retina iOS/iPad)
+        Konva.pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+
         const SUPABASE_URL = 'https://izeswedmiovglkucyyzi.supabase.co';
         const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_UtZgC_cW0Oyz1zHRcWvKeA_8ODEj3jM';
         const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+        // =========================================================================
+        // DETEÇÃO DE DISPOSITIVO (IPHONE / IPAD / TABLET / DESKTOP)
+        // =========================================================================
+        function detectDeviceProfile() {
+            const ua = navigator.userAgent || '';
+            const width = window.innerWidth;
+            const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+            const isIPad = /iPad/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            const isIPhone = /iPhone|iPod/i.test(ua);
+            const isAndroid = /Android/i.test(ua);
+
+            let type = 'desktop';
+            let label = 'Desktop';
+
+            if (isIPhone || (width < 640)) {
+                type = 'phone';
+                label = isIPhone ? 'iPhone' : 'Móvil';
+            } else if (isIPad || (isAndroid && width >= 640) || (isTouch && width <= 1180)) {
+                type = 'tablet';
+                label = isIPad ? 'iPad' : 'Tablet';
+            }
+
+            return { type, label, isTouch, width };
+        }
+
+        let deviceProfile = detectDeviceProfile();
+
+        function applyDeviceAdaptations() {
+            deviceProfile = detectDeviceProfile();
+            const badge = document.getElementById('device-badge');
+            if (badge) {
+                badge.textContent = deviceProfile.label;
+                badge.classList.remove('hidden');
+            }
+
+            const hintCircle = document.getElementById('hint-circle');
+            const hintBar = document.getElementById('hint-bar');
+            const doneHint = document.getElementById('mc-done-hint');
+
+            if (deviceProfile.isTouch) {
+                if (hintCircle) hintCircle.innerHTML = '<strong>Toque en círculo:</strong> ejecutada';
+                if (hintBar) hintBar.innerHTML = '<strong>Toque en barra:</strong> editar';
+                if (doneHint) doneHint.textContent = '(mantener pulsado)';
+            } else {
+                if (hintCircle) hintCircle.innerHTML = '<strong>Clic en círculo:</strong> ejecutada';
+                if (hintBar) hintBar.innerHTML = '<strong>Clic en barra:</strong> editar';
+                if (doneHint) doneHint.textContent = '(clic derecho)';
+            }
+        }
+
+        applyDeviceAdaptations();
 
         // Estado Global
         let bloques = [];
         let lineas = [];
         let comunicaciones = [];
         let highlightGrupo = 'ALL';
+        let filterBloque = 'ALL';
         let activeLineaId = null;
         let draftComs = {};
 
+        let activeStage = null;
         let hoveredLineaId = null;
+        let hoveredMarkerInfo = null;
         let hoverDetailTimer = null;
 
         const DEFAULT_BLOQUES = [
@@ -322,14 +404,14 @@
         function setSyncBadge(state, detail = '') {
             const el = document.getElementById('sync-status');
             if (state === 'saving') {
-                el.className = 'ml-2 px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-semibold border border-amber-200';
-                el.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>Sincronizando...';
+                el.className = 'px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-semibold border border-amber-200 shrink-0';
+                el.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>Sync...';
             } else if (state === 'error') {
-                el.className = 'ml-2 px-2 py-0.5 rounded bg-rose-50 text-rose-700 font-semibold border border-rose-200';
-                el.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i>${detail || 'Error Supabase'}`;
+                el.className = 'px-2 py-0.5 rounded bg-rose-50 text-rose-700 font-semibold border border-rose-200 shrink-0';
+                el.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i>${detail || 'Error'}`;
             } else {
-                el.className = 'ml-2 px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200';
-                el.innerHTML = '<i class="fa-solid fa-check-circle mr-1"></i>Supabase OK';
+                el.className = 'px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200 shrink-0';
+                el.innerHTML = '<i class="fa-solid fa-check-circle mr-1"></i>OK';
             }
         }
 
@@ -346,7 +428,7 @@
 
             if (resL.error || resC.error) {
                 console.error(resL.error || resC.error);
-                setSyncBadge('error', 'Faltan tablas SQL');
+                setSyncBadge('error', 'Error SQL');
                 return;
             }
 
@@ -354,28 +436,67 @@
             lineas = resL.data || [];
             comunicaciones = resC.data || [];
 
-            // Garantir que blocos presentes nas linhas mas ainda não na tabela apareçam também
             lineas.forEach(l => {
                 if (!bloques.some(b => b.nombre === l.bloque)) {
                     bloques.push({ nombre: l.bloque, color: '#475569' });
                 }
             });
 
+            if (filterBloque !== 'ALL' && !bloques.some(b => b.nombre === filterBloque)) {
+                filterBloque = 'ALL';
+            }
+
             setSyncBadge('ok');
-            renderBloquesLegend();
+            renderBloquesFilterBar();
             populateBloquesSelect();
             renderKonvaRoadmap();
         }
 
-        function renderBloquesLegend() {
+        // =========================================================================
+        // BARRA DE FILTRO POR BLOQUES
+        // =========================================================================
+        window.setFilterBloque = function(bloqueNombre) {
+            filterBloque = bloqueNombre;
+            renderBloquesFilterBar();
+            renderKonvaRoadmap();
+        };
+
+        function renderBloquesFilterBar() {
             const container = document.getElementById('bloques-legend');
-            container.innerHTML = `<span class="font-bold text-slate-600 uppercase tracking-wider text-[11px]">Bloques:</span>` +
-                bloques.map(b => `
-                    <span class="flex items-center gap-1.5">
-                        <span class="w-3 h-3 rounded-sm" style="background-color: ${b.color}"></span>
-                        ${b.nombre}
-                    </span>
-                `).join('');
+            const totalCount = lineas.length;
+            const isAll = filterBloque === 'ALL';
+
+            let html = `<span class="font-bold text-slate-600 uppercase tracking-wider text-[11px] mr-1 shrink-0">Bloque:</span>`;
+
+            html += `
+                <button type="button" onclick="setFilterBloque('ALL')"
+                    class="px-2.5 py-1 rounded-md text-xs font-bold border transition flex items-center gap-1.5 shrink-0
+                    ${isAll
+                        ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
+                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">
+                    <span>Todos</span>
+                    <span class="text-[10px] px-1.5 rounded-full ${isAll ? 'bg-slate-700 text-slate-200' : 'bg-slate-200 text-slate-600'}">${totalCount}</span>
+                </button>
+            `;
+
+            html += bloques.map(b => {
+                const count = lineas.filter(l => l.bloque === b.nombre).length;
+                const active = filterBloque === b.nombre;
+                return `
+                    <button type="button" onclick="setFilterBloque('${b.nombre.replace(/'/g, "\\'")}')"
+                        style="${active ? `background-color: ${b.color}; border-color: ${b.color}; color: #ffffff;` : ''}"
+                        class="px-2.5 py-1 rounded-md text-xs font-semibold border transition flex items-center gap-1.5 shrink-0
+                        ${active
+                            ? 'shadow-xs font-bold'
+                            : 'bg-white text-slate-700 border-slate-200 hover:border-slate-400'}">
+                        <span class="w-2.5 h-2.5 rounded-full shrink-0 ${active ? 'ring-2 ring-white/80' : ''}" style="background-color: ${b.color}"></span>
+                        <span>${b.nombre}</span>
+                        <span class="text-[10px] px-1.5 rounded-full ${active ? 'bg-black/20 text-white' : 'bg-slate-100 text-slate-500'}">${count}</span>
+                    </button>
+                `;
+            }).join('');
+
+            container.innerHTML = html;
         }
 
         function populateBloquesSelect(selectedValue = null) {
@@ -388,30 +509,98 @@
         }
 
         // =========================================================================
-        // RENDERIZAÇÃO KONVA.JS ULTRA-FLUIDA
+        // MARCAR / DESMARCAR COMO EXECUTADA DIRETAMENTE NO CANVAS
+        // =========================================================================
+        async function toggleWeekDoneDirect(lineaId, sem) {
+            const targetComs = comunicaciones.filter(c =>
+                c.linea_id === lineaId &&
+                (highlightGrupo === 'ALL' || c.grupo === highlightGrupo) &&
+                (c.semanas_marcadas || []).includes(sem)
+            );
+
+            if (targetComs.length === 0) return;
+
+            const allCurrentlyDone = targetComs.every(c => (c.semanas_completadas || []).includes(sem));
+            const nextDoneState = !allCurrentlyDone;
+
+            setSyncBadge('saving');
+
+            const updates = targetComs.map(c => {
+                const currentDone = new Set(c.semanas_completadas || []);
+                if (nextDoneState) currentDone.add(sem);
+                else currentDone.delete(sem);
+
+                const updatedArr = Array.from(currentDone).sort((a, b) => a - b);
+                c.semanas_completadas = updatedArr;
+
+                return supabase
+                    .from('hdr_2027_comunicaciones')
+                    .update({
+                        semanas_completadas: updatedArr,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', c.id);
+            });
+
+            renderKonvaRoadmap();
+
+            const results = await Promise.all(updates);
+            if (results.some(r => r.error)) {
+                setSyncBadge('error', 'Error sync');
+                await fetchData();
+            } else {
+                setSyncBadge('ok');
+            }
+        }
+
+        // =========================================================================
+        // RENDERIZAÇÃO KONVA.JS OTIMIZADA (60 FPS + RESPONSIVA IPHONE/IPAD/TABLET)
         // =========================================================================
         function renderKonvaRoadmap() {
+            const wrapper = document.getElementById('canvas-wrapper');
+            const prevScrollLeft = wrapper ? wrapper.scrollLeft : 0;
+
+            if (activeStage) {
+                activeStage.destroy();
+                activeStage = null;
+            }
+
             const container = document.getElementById('konva-container');
             container.innerHTML = '';
 
-            if (lineas.length === 0) {
-                container.innerHTML = `<div class="p-12 text-center text-slate-500 text-sm">No hay líneas en la Hoja de Ruta. Pulsa <strong>"Nueva Línea HdR"</strong> para empezar.</div>`;
+            const visibleLineas = filterBloque === 'ALL'
+                ? lineas
+                : lineas.filter(l => l.bloque === filterBloque);
+
+            if (visibleLineas.length === 0) {
+                const msg = lineas.length === 0
+                    ? `No hay líneas en la Hoja de Ruta. Pulsa <strong>"Nueva Línea"</strong> para empezar.`
+                    : `No hay líneas registradas dentro del bloque <strong>"${filterBloque}"</strong>.`;
+                container.innerHTML = `<div class="p-10 text-center text-slate-500 text-sm">${msg}</div>`;
                 return;
             }
 
-            const leftColWidth = 370;
-            const weekWidth = 23.5;
+            // Geometria adaptada ao dispositivo detetado
+            const isPhone = deviceProfile.type === 'phone';
+            const isTablet = deviceProfile.type === 'tablet';
+
+            const leftColWidth = isPhone ? 185 : (isTablet ? 270 : 370);
             const totalWeeks = 52;
-            const headerHeight = 56;
-            const rowHeight = 46;
-            const stageWidth = leftColWidth + (weekWidth * totalWeeks) + 20;
-            const stageHeight = headerHeight + (lineas.length * rowHeight) + 20;
+            const availableWidth = wrapper.clientWidth || window.innerWidth;
+            const minWeekWidth = isPhone ? 26 : (isTablet ? 25 : 23.5);
+            const weekWidth = Math.max(minWeekWidth, (availableWidth - leftColWidth - 20) / totalWeeks);
+
+            const headerHeight = isPhone ? 50 : 56;
+            const rowHeight = isPhone ? 50 : (isTablet ? 48 : 46);
+            const stageWidth = leftColWidth + (weekWidth * totalWeeks) + 16;
+            const stageHeight = headerHeight + (visibleLineas.length * rowHeight) + 16;
 
             const stage = new Konva.Stage({
                 container: 'konva-container',
                 width: stageWidth,
                 height: stageHeight
             });
+            activeStage = stage;
 
             const gridLayer = new Konva.Layer({ listening: false });
             const hoverLayer = new Konva.Layer({ listening: false });
@@ -423,19 +612,31 @@
                 width: stageWidth,
                 height: rowHeight,
                 fill: '#f1f5f9',
-                visible: false
+                visible: false,
+                perfectDrawEnabled: false
             });
             hoverLayer.add(hoverHighlightRect);
 
+            // Cabeçalho
             gridLayer.add(new Konva.Rect({
                 x: 0, y: 0, width: stageWidth, height: headerHeight,
-                fill: '#f8fafc'
+                fill: '#f8fafc',
+                perfectDrawEnabled: false
             }));
 
             gridLayer.add(new Konva.Text({
-                x: 16, y: 18,
-                text: 'BLOQUE / LÍNEA HOJA DE RUTA 2027',
-                fontSize: 11, fontStyle: 'bold', fill: '#475569', fontFamily: 'sans-serif'
+                x: 12, y: isPhone ? 16 : 18,
+                width: leftColWidth - 20,
+                text: filterBloque === 'ALL'
+                    ? (isPhone ? 'LÍNEA HdR 2027' : 'BLOQUE / LÍNEA HOJA DE RUTA 2027')
+                    : filterBloque.toUpperCase(),
+                fontSize: isPhone ? 10 : 11,
+                fontStyle: 'bold',
+                fill: '#475569',
+                fontFamily: 'sans-serif',
+                ellipsis: true,
+                wrap: 'none',
+                perfectDrawEnabled: false
             }));
 
             MESES.forEach((mes, idx) => {
@@ -445,40 +646,47 @@
                 if (idx % 2 === 1) {
                     gridLayer.add(new Konva.Rect({
                         x: startX, y: headerHeight, width: wWidth, height: stageHeight - headerHeight,
-                        fill: '#f8fafc'
+                        fill: '#f8fafc',
+                        perfectDrawEnabled: false
                     }));
                 }
 
                 gridLayer.add(new Konva.Rect({
-                    x: startX, y: 0, width: wWidth, height: 28,
-                    stroke: '#e2e8f0', strokeWidth: 1, fill: '#f1f5f9'
+                    x: startX, y: 0, width: wWidth, height: 26,
+                    stroke: '#e2e8f0', strokeWidth: 1, fill: '#f1f5f9',
+                    perfectDrawEnabled: false
                 }));
                 gridLayer.add(new Konva.Text({
-                    x: startX, y: 8, width: wWidth, align: 'center',
+                    x: startX, y: 7, width: wWidth, align: 'center',
                     text: mes.name.toUpperCase(),
-                    fontSize: 11, fontStyle: 'bold', fill: '#1e293b', fontFamily: 'sans-serif'
+                    fontSize: 10.5, fontStyle: 'bold', fill: '#1e293b', fontFamily: 'sans-serif',
+                    perfectDrawEnabled: false
                 }));
 
                 mes.weeks.forEach(w => {
                     const wx = leftColWidth + (w - 1) * weekWidth;
                     gridLayer.add(new Konva.Line({
-                        points: [wx, 28, wx, stageHeight],
-                        stroke: '#e2e8f0', strokeWidth: 1
+                        points: [wx, 26, wx, stageHeight],
+                        stroke: '#e2e8f0', strokeWidth: 1,
+                        perfectDrawEnabled: false
                     }));
                     gridLayer.add(new Konva.Text({
-                        x: wx, y: 36, width: weekWidth, align: 'center',
-                        text: `S${w}`, fontSize: 9, fill: '#64748b', fontFamily: 'monospace'
+                        x: wx, y: 33, width: weekWidth, align: 'center',
+                        text: `S${w}`, fontSize: 9, fill: '#64748b', fontFamily: 'monospace',
+                        perfectDrawEnabled: false
                     }));
                 });
             });
 
             gridLayer.add(new Konva.Line({
                 points: [0, headerHeight, stageWidth, headerHeight],
-                stroke: '#cbd5e1', strokeWidth: 1.5
+                stroke: '#cbd5e1', strokeWidth: 1.5,
+                perfectDrawEnabled: false
             }));
             gridLayer.add(new Konva.Line({
                 points: [leftColWidth, 0, leftColWidth, stageHeight],
-                stroke: '#cbd5e1', strokeWidth: 1.5
+                stroke: '#cbd5e1', strokeWidth: 1.5,
+                perfectDrawEnabled: false
             }));
 
             const tooltip = document.getElementById('konva-tooltip');
@@ -497,7 +705,10 @@
                     ? activos.map(c => `
                         <div class="flex items-start justify-between gap-2 text-[11px] py-0.5">
                             <span class="font-bold text-amber-300 shrink-0">${c.grupo}:</span>
-                            <span class="text-slate-200 text-right">${c.semanas_marcadas.map(s => `S${s}`).join(', ')}</span>
+                            <span class="text-slate-200 text-right">${c.semanas_marcadas.map(s => {
+                                const done = (c.semanas_completadas || []).includes(s);
+                                return done ? `<span class="text-emerald-400 font-bold">✓S${s}</span>` : `S${s}`;
+                            }).join(', ')}</span>
                         </div>
                     `).join('')
                     : `<div class="text-[11px] text-slate-400 italic">Sin comunicaciones marcadas aún</div>`;
@@ -507,51 +718,144 @@
                     <div class="font-bold text-white text-xs leading-snug mt-0.5">${linea.linea}</div>
                     <div class="text-[11px] font-mono text-sky-300 mt-1 pb-1.5 border-b border-slate-700">${rangeStr}</div>
                     <div class="mt-1.5 space-y-0.5">${gruposHtml}</div>
-                    <div class="text-[10px] text-slate-400 mt-2 pt-1 border-t border-slate-800">Clic para editar semanas y grupos</div>
+                    <div class="text-[10px] text-slate-400 mt-2 pt-1 border-t border-slate-800">Clic en barra: editar · Clic en círculo: marcar ejecutada</div>
                 `;
             }
 
-            lineas.forEach((linea, index) => {
+            function buildMarkerTooltipHtml(linea, sem, items) {
+                const allDone = items.every(i => i.done);
+                const statusBadge = allDone
+                    ? `<span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold text-[10px]">✓ EJECUTADA</span>`
+                    : `<span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold text-[10px]">PENDIENTE</span>`;
+
+                const listHtml = items.map(i => `
+                    <div class="flex items-center justify-between gap-3 text-[11px]">
+                        <span class="font-bold text-white">${i.grupo}</span>
+                        <span class="${i.done ? 'text-emerald-400 font-semibold' : 'text-slate-400'}">${i.done ? '✓ Enviada' : 'Programada'}</span>
+                    </div>
+                `).join('');
+
+                return `
+                    <div class="flex items-center justify-between gap-2 mb-1">
+                        <span class="font-mono font-bold text-sky-300 text-xs">Semana S${sem} (${getMesByWeek(sem)})</span>
+                        ${statusBadge}
+                    </div>
+                    <div class="text-[11px] text-slate-300 mb-1.5 truncate">${linea.linea}</div>
+                    <div class="space-y-0.5 border-t border-slate-700 pt-1">${listHtml}</div>
+                    <div class="text-[10px] text-emerald-400 font-semibold mt-1.5 pt-1 border-t border-slate-800">
+                        <i class="fa-solid fa-hand-pointer mr-1"></i>Clic para ${allDone ? 'desmarcar' : 'marcar como ejecutada'}
+                    </div>
+                `;
+            }
+
+            // Agrupar comunicações por linha_id antecipadamente (O(N) em vez de O(N^2))
+            const comsByLinea = {};
+            comunicaciones.forEach(c => {
+                if (!comsByLinea[c.linea_id]) comsByLinea[c.linea_id] = [];
+                comsByLinea[c.linea_id].push(c);
+            });
+
+            visibleLineas.forEach((linea, index) => {
                 const y = headerHeight + index * rowHeight;
                 const color = getBloqueColor(linea.bloque);
-                const lineComs = comunicaciones.filter(c => c.linea_id === linea.id);
+                const lineComs = comsByLinea[linea.id] || [];
 
                 gridLayer.add(new Konva.Line({
                     points: [0, y + rowHeight, stageWidth, y + rowHeight],
-                    stroke: '#f1f5f9', strokeWidth: 1
+                    stroke: '#f1f5f9', strokeWidth: 1,
+                    perfectDrawEnabled: false
                 }));
 
                 gridLayer.add(new Konva.Rect({
-                    x: 8, y: y + 10, width: 4, height: rowHeight - 20,
-                    fill: color, cornerRadius: 2
+                    x: 6, y: y + 10, width: 4, height: rowHeight - 20,
+                    fill: color, cornerRadius: 2,
+                    perfectDrawEnabled: false
                 }));
 
-                const textMaxW = leftColWidth - 78;
+                // Em iPhone ocultamos os 2 mini-botões da lista para dar espaço ao nome da linha (editar/eliminar fica dentro do modal)
+                const actionButtonsSpace = isPhone ? 12 : 68;
+                const textMaxW = leftColWidth - actionButtonsSpace - 14;
+
                 gridLayer.add(new Konva.Text({
-                    x: 18, y: y + 7, width: textMaxW,
-                    text: `${linea.bloque.toUpperCase()} · (S${linea.semana_inicio}–S${linea.semana_fin})`,
-                    fontSize: 9, fontStyle: 'bold', fill: color, fontFamily: 'sans-serif',
-                    ellipsis: true, wrap: 'none'
+                    x: 14, y: y + 8, width: textMaxW,
+                    text: isPhone
+                        ? `S${linea.semana_inicio}–S${linea.semana_fin} · ${linea.bloque}`
+                        : `${linea.bloque.toUpperCase()} · (S${linea.semana_inicio}–S${linea.semana_fin})`,
+                    fontSize: isPhone ? 8.5 : 9,
+                    fontStyle: 'bold',
+                    fill: color,
+                    fontFamily: 'sans-serif',
+                    ellipsis: true,
+                    wrap: 'none',
+                    perfectDrawEnabled: false
                 }));
 
                 gridLayer.add(new Konva.Text({
-                    x: 18, y: y + 20, width: textMaxW,
+                    x: 14, y: y + 21, width: textMaxW,
                     text: linea.linea,
-                    fontSize: 12, fontStyle: '600', fill: '#1e293b', fontFamily: 'sans-serif',
-                    ellipsis: true, wrap: 'none'
+                    fontSize: isPhone ? 11 : 12,
+                    fontStyle: '600',
+                    fill: '#1e293b',
+                    fontFamily: 'sans-serif',
+                    ellipsis: true,
+                    wrap: 'none',
+                    perfectDrawEnabled: false
                 }));
 
+                // Hitbox da linha
+                const rowHitbox = new Konva.Rect({
+                    x: 0,
+                    y: y,
+                    width: stageWidth,
+                    height: rowHeight,
+                    fill: 'rgba(0,0,0,0)',
+                    perfectDrawEnabled: false
+                });
+
+                if (!deviceProfile.isTouch) {
+                    rowHitbox.on('mouseenter', () => {
+                        document.body.style.cursor = 'pointer';
+                        hoveredLineaId = linea.id;
+                        hoveredMarkerInfo = null;
+
+                        hoverHighlightRect.y(y);
+                        hoverHighlightRect.visible(true);
+                        hoverLayer.batchDraw();
+
+                        clearTimeout(hoverDetailTimer);
+                        tooltip.innerHTML = buildTooltipHtml(linea, lineComs, false);
+                        tooltip.style.opacity = '1';
+
+                        hoverDetailTimer = setTimeout(() => {
+                            if (hoveredLineaId === linea.id && !hoveredMarkerInfo) {
+                                tooltip.innerHTML = buildTooltipHtml(linea, lineComs, true);
+                            }
+                        }, 420);
+                    });
+                }
+
+                rowHitbox.on('click tap', () => {
+                    clearTimeout(hoverDetailTimer);
+                    tooltip.style.opacity = '0';
+                    openComunicacionModal(linea.id);
+                });
+
+                barsLayer.add(rowHitbox);
+
+                // Barra visual do período
                 const barX = leftColWidth + (linea.semana_inicio - 1) * weekWidth + 2;
                 const barW = Math.max((linea.semana_fin - linea.semana_inicio + 1) * weekWidth - 4, 16);
 
                 barsLayer.add(new Konva.Rect({
-                    x: barX, y: y + 11, width: barW, height: 24,
+                    x: barX, y: y + (rowHeight - 24) / 2, width: barW, height: 24,
                     fill: color, opacity: 0.2,
                     stroke: color, strokeWidth: 1.5,
                     cornerRadius: 6,
-                    listening: false
+                    listening: false,
+                    perfectDrawEnabled: false
                 }));
 
+                // Marcadores interativos por semana
                 const weekMarkers = {};
                 lineComs.forEach(c => {
                     if (highlightGrupo !== 'ALL' && c.grupo !== highlightGrupo) return;
@@ -567,7 +871,7 @@
                 Object.entries(weekMarkers).forEach(([semStr, items]) => {
                     const sem = parseInt(semStr);
                     const cx = leftColWidth + (sem - 1) * weekWidth + (weekWidth / 2);
-                    const cy = y + 23;
+                    const cy = y + rowHeight / 2;
                     const allDone = items.every(i => i.done);
 
                     let dotColor = color;
@@ -577,132 +881,181 @@
                     }
                     if (allDone) dotColor = '#10b981';
 
-                    barsLayer.add(new Konva.Circle({
-                        x: cx, y: cy, radius: 8.5,
+                    const markerGroup = new Konva.Group({ x: cx, y: cy });
+
+                    // Área de toque expandida e invisível para facilitar o toque em iPad/iPhone
+                    const touchTarget = new Konva.Circle({
+                        x: 0, y: 0, radius: deviceProfile.isTouch ? 16 : 11,
+                        fill: 'rgba(0,0,0,0)',
+                        perfectDrawEnabled: false
+                    });
+
+                    const circleRadius = isPhone ? 10.5 : 9.5;
+                    const circle = new Konva.Circle({
+                        x: 0, y: 0, radius: circleRadius,
                         fill: dotColor,
-                        stroke: '#ffffff', strokeWidth: 1.5,
-                        listening: false
-                    }));
+                        stroke: allDone ? '#065f46' : '#ffffff',
+                        strokeWidth: allDone ? 2 : 1.5,
+                        listening: false,
+                        perfectDrawEnabled: false
+                    });
 
-                    barsLayer.add(new Konva.Text({
-                        x: cx - 8.5, y: cy - 4.5, width: 17, align: 'center',
-                        text: items.length > 1 ? `${items.length}` : items[0].grupo.substring(0, 2),
-                        fontSize: 8.5, fontStyle: 'bold', fill: '#ffffff', fontFamily: 'sans-serif',
-                        listening: false
-                    }));
+                    const labelText = allDone
+                        ? '✓'
+                        : (items.length > 1 ? `${items.length}` : items[0].grupo.substring(0, 2));
+
+                    const label = new Konva.Text({
+                        x: -circleRadius, y: -5, width: circleRadius * 2, align: 'center',
+                        text: labelText,
+                        fontSize: allDone ? 11 : 8.5,
+                        fontStyle: 'bold',
+                        fill: '#ffffff',
+                        fontFamily: 'sans-serif',
+                        listening: false,
+                        perfectDrawEnabled: false
+                    });
+
+                    markerGroup.add(touchTarget, circle, label);
+
+                    if (!deviceProfile.isTouch) {
+                        markerGroup.on('mouseenter', () => {
+                            document.body.style.cursor = 'pointer';
+                            hoveredLineaId = linea.id;
+                            hoveredMarkerInfo = { lineaId: linea.id, sem };
+                            clearTimeout(hoverDetailTimer);
+
+                            hoverHighlightRect.y(y);
+                            hoverHighlightRect.visible(true);
+                            hoverLayer.batchDraw();
+
+                            circle.scale({ x: 1.2, y: 1.2 });
+                            barsLayer.batchDraw();
+
+                            tooltip.innerHTML = buildMarkerTooltipHtml(linea, sem, items);
+                            tooltip.style.opacity = '1';
+                        });
+
+                        markerGroup.on('mouseleave', () => {
+                            hoveredMarkerInfo = null;
+                            circle.scale({ x: 1, y: 1 });
+                            barsLayer.batchDraw();
+                        });
+                    }
+
+                    markerGroup.on('click tap', (e) => {
+                        e.cancelBubble = true;
+                        clearTimeout(hoverDetailTimer);
+                        tooltip.style.opacity = '0';
+                        toggleWeekDoneDirect(linea.id, sem);
+                    });
+
+                    barsLayer.add(markerGroup);
                 });
 
-                const rowHitbox = new Konva.Rect({
-                    x: 0,
-                    y: y,
-                    width: stageWidth,
-                    height: rowHeight,
-                    fill: 'rgba(0,0,0,0)'
-                });
+                // Botões rápidos Editar/Eliminar (em Tablet e Desktop; no iPhone estão dentro do modal para não apertar o texto)
+                if (!isPhone) {
+                    const btnY = y + (rowHeight - 24) / 2;
 
-                rowHitbox.on('mouseenter', () => {
-                    document.body.style.cursor = 'pointer';
-                    hoveredLineaId = linea.id;
+                    const editBtnGroup = new Konva.Group({ x: leftColWidth - 58, y: btnY });
+                    const editBg = new Konva.Rect({
+                        width: 24, height: 24, cornerRadius: 5,
+                        fill: '#f1f5f9', stroke: '#cbd5e1', strokeWidth: 1,
+                        perfectDrawEnabled: false
+                    });
+                    const editIcon = new Konva.Text({
+                        width: 24, height: 24, align: 'center', verticalAlign: 'middle',
+                        text: '✎', fontSize: 12, fill: '#475569', listening: false,
+                        perfectDrawEnabled: false
+                    });
+                    editBtnGroup.add(editBg, editIcon);
+                    if (!deviceProfile.isTouch) {
+                        editBtnGroup.on('mouseenter', () => {
+                            document.body.style.cursor = 'pointer';
+                            editBg.fill('#e0e7ff');
+                            barsLayer.batchDraw();
+                        });
+                        editBtnGroup.on('mouseleave', () => {
+                            editBg.fill('#f1f5f9');
+                            barsLayer.batchDraw();
+                        });
+                    }
+                    editBtnGroup.on('click tap', (e) => {
+                        e.cancelBubble = true;
+                        tooltip.style.opacity = '0';
+                        openEditLineaModal(linea.id);
+                    });
+                    barsLayer.add(editBtnGroup);
 
-                    hoverHighlightRect.y(y);
-                    hoverHighlightRect.visible(true);
-                    hoverLayer.batchDraw();
-
-                    clearTimeout(hoverDetailTimer);
-                    tooltip.innerHTML = buildTooltipHtml(linea, lineComs, false);
-                    tooltip.style.opacity = '1';
-
-                    hoverDetailTimer = setTimeout(() => {
-                        if (hoveredLineaId === linea.id) {
-                            tooltip.innerHTML = buildTooltipHtml(linea, lineComs, true);
-                        }
-                    }, 450);
-                });
-
-                rowHitbox.on('click tap', () => {
-                    clearTimeout(hoverDetailTimer);
-                    tooltip.style.opacity = '0';
-                    openComunicacionModal(linea.id);
-                });
-
-                barsLayer.add(rowHitbox);
-
-                // Botão Rápido EDITAR LÍNEA
-                const editBtnGroup = new Konva.Group({ x: leftColWidth - 54, y: y + 12 });
-                const editBg = new Konva.Rect({
-                    width: 22, height: 22, cornerRadius: 5,
-                    fill: '#f1f5f9', stroke: '#cbd5e1', strokeWidth: 1
-                });
-                const editIcon = new Konva.Text({
-                    width: 22, height: 22, align: 'center', verticalAlign: 'middle',
-                    text: '✎', fontSize: 12, fill: '#475569', listening: false
-                });
-                editBtnGroup.add(editBg, editIcon);
-                editBtnGroup.on('mouseenter', () => {
-                    document.body.style.cursor = 'pointer';
-                    editBg.fill('#e0e7ff');
-                    barsLayer.batchDraw();
-                });
-                editBtnGroup.on('mouseleave', () => {
-                    editBg.fill('#f1f5f9');
-                    barsLayer.batchDraw();
-                });
-                editBtnGroup.on('click tap', (e) => {
-                    e.cancelBubble = true;
-                    tooltip.style.opacity = '0';
-                    openEditLineaModal(linea.id);
-                });
-                barsLayer.add(editBtnGroup);
-
-                // Botão Rápido ELIMINAR LÍNEA
-                const delBtnGroup = new Konva.Group({ x: leftColWidth - 28, y: y + 12 });
-                const delBg = new Konva.Rect({
-                    width: 22, height: 22, cornerRadius: 5,
-                    fill: '#fff1f2', stroke: '#fecdd3', strokeWidth: 1
-                });
-                const delIcon = new Konva.Text({
-                    width: 22, height: 22, align: 'center', verticalAlign: 'middle',
-                    text: '✕', fontSize: 11, fontStyle: 'bold', fill: '#e11d48', listening: false
-                });
-                delBtnGroup.add(delBg, delIcon);
-                delBtnGroup.on('mouseenter', () => {
-                    document.body.style.cursor = 'pointer';
-                    delBg.fill('#ffe4e6');
-                    barsLayer.batchDraw();
-                });
-                delBtnGroup.on('mouseleave', () => {
-                    delBg.fill('#fff1f2');
-                    barsLayer.batchDraw();
-                });
-                delBtnGroup.on('click tap', (e) => {
-                    e.cancelBubble = true;
-                    tooltip.style.opacity = '0';
-                    deleteLineaById(linea.id);
-                });
-                barsLayer.add(delBtnGroup);
-            });
-
-            stage.on('mousemove', (e) => {
-                if (hoveredLineaId !== null) {
-                    const x = Math.min(e.evt.clientX + 14, window.innerWidth - 360);
-                    const y = Math.min(e.evt.clientY + 14, window.innerHeight - 160);
-                    tooltip.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+                    const delBtnGroup = new Konva.Group({ x: leftColWidth - 30, y: btnY });
+                    const delBg = new Konva.Rect({
+                        width: 24, height: 24, cornerRadius: 5,
+                        fill: '#fff1f2', stroke: '#fecdd3', strokeWidth: 1,
+                        perfectDrawEnabled: false
+                    });
+                    const delIcon = new Konva.Text({
+                        width: 24, height: 24, align: 'center', verticalAlign: 'middle',
+                        text: '✕', fontSize: 11, fontStyle: 'bold', fill: '#e11d48', listening: false,
+                        perfectDrawEnabled: false
+                    });
+                    delBtnGroup.add(delBg, delIcon);
+                    if (!deviceProfile.isTouch) {
+                        delBtnGroup.on('mouseenter', () => {
+                            document.body.style.cursor = 'pointer';
+                            delBg.fill('#ffe4e6');
+                            barsLayer.batchDraw();
+                        });
+                        delBtnGroup.on('mouseleave', () => {
+                            delBg.fill('#fff1f2');
+                            barsLayer.batchDraw();
+                        });
+                    }
+                    delBtnGroup.on('click tap', (e) => {
+                        e.cancelBubble = true;
+                        tooltip.style.opacity = '0';
+                        deleteLineaById(linea.id);
+                    });
+                    barsLayer.add(delBtnGroup);
                 }
             });
 
-            stage.on('mouseleave', () => {
-                document.body.style.cursor = 'default';
-                hoveredLineaId = null;
-                clearTimeout(hoverDetailTimer);
-                hoverHighlightRect.visible(false);
-                hoverLayer.batchDraw();
-                tooltip.style.opacity = '0';
-            });
+            if (!deviceProfile.isTouch) {
+                stage.on('mousemove', (e) => {
+                    if (hoveredLineaId !== null) {
+                        const x = Math.min(e.evt.clientX + 14, window.innerWidth - 360);
+                        const y = Math.min(e.evt.clientY + 14, window.innerHeight - 160);
+                        tooltip.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+                    }
+                });
+
+                stage.on('mouseleave', () => {
+                    document.body.style.cursor = 'default';
+                    hoveredLineaId = null;
+                    hoveredMarkerInfo = null;
+                    clearTimeout(hoverDetailTimer);
+                    hoverHighlightRect.visible(false);
+                    hoverLayer.batchDraw();
+                    tooltip.style.opacity = '0';
+                });
+            }
 
             stage.add(gridLayer);
             stage.add(hoverLayer);
             stage.add(barsLayer);
+
+            if (wrapper && prevScrollLeft > 0) {
+                wrapper.scrollLeft = prevScrollLeft;
+            }
         }
+
+        // Reajustar automaticamente ao rodar iPad / iPhone ou redimensionar janela
+        let resizeTimer = null;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                applyDeviceAdaptations();
+                renderKonvaRoadmap();
+            }, 180);
+        });
 
         // =========================================================================
         // MODAL 4: CRIAR NOVO BLOQUE TEMÁTICO
@@ -796,6 +1149,7 @@
             const onlyRange = document.getElementById('mc-only-range').checked;
             const startW = onlyRange ? linea.semana_inicio : 1;
             const endW = onlyRange ? linea.semana_fin : 52;
+            const btnHeightClass = deviceProfile.isTouch ? 'h-10 text-xs' : 'h-8 text-[11px]';
 
             const body = document.getElementById('mc-body');
             body.innerHTML = GRUPOS_CONFIG.map(g => {
@@ -805,14 +1159,14 @@
 
                 if (!isEnabled) {
                     return `
-                    <div class="border border-dashed border-slate-300 rounded-xl px-4 py-3 bg-slate-50/40 flex items-center justify-between">
-                        <div class="flex items-center gap-2.5 opacity-60">
-                            <span class="text-xs font-bold px-2.5 py-1 rounded border ${g.badgeBg}">${g.label}</span>
-                            <span class="text-xs text-slate-500">${g.desc} — <em>No seleccionado para esta línea</em></span>
+                    <div class="border border-dashed border-slate-300 rounded-xl px-4 py-3 bg-slate-50/40 flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2.5 opacity-60 min-w-0">
+                            <span class="text-xs font-bold px-2.5 py-1 rounded border shrink-0 ${g.badgeBg}">${g.label}</span>
+                            <span class="text-xs text-slate-500 truncate">${g.desc}</span>
                         </div>
                         <button type="button" onclick="toggleGroupEnabled('${g.id}')"
-                            class="text-xs font-semibold text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-200 bg-white transition">
-                            <i class="fa-solid fa-plus mr-1"></i>Activar grupo
+                            class="text-xs font-semibold text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-200 bg-white transition shrink-0">
+                            <i class="fa-solid fa-plus mr-1"></i>Activar
                         </button>
                     </div>`;
                 }
@@ -836,40 +1190,43 @@
                         <button type="button"
                             onclick="toggleDraftWeek('${g.id}', ${s})"
                             oncontextmenu="event.preventDefault(); toggleDraftDone('${g.id}', ${s})"
-                            title="S${s} (${getMesByWeek(s)}) · Clic: Marcar/Quitar | Clic derecho: Marcar como enviada"
-                            class="h-8 px-1 text-[11px] font-mono rounded-md border transition flex items-center justify-center ${btnClass}">
+                            ontouchstart="startLongPressDone('${g.id}', ${s})"
+                            ontouchend="cancelLongPressDone()"
+                            ontouchmove="cancelLongPressDone()"
+                            title="S${s} (${getMesByWeek(s)})"
+                            class="${btnHeightClass} px-1 font-mono rounded-md border transition flex items-center justify-center select-none ${btnClass}">
                             ${isDone ? `✓ S${s}` : `S${s}`}
                         </button>
                     `;
                 }
 
                 return `
-                <div class="border border-slate-300 rounded-xl p-4 bg-white shadow-2xs space-y-3">
+                <div class="border border-slate-300 rounded-xl p-3.5 sm:p-4 bg-white shadow-2xs space-y-3">
                     <div class="flex flex-wrap items-center justify-between gap-2">
-                        <div class="flex items-center gap-2.5">
-                            <input type="checkbox" checked onchange="toggleGroupEnabled('${g.id}')" class="w-4 h-4 accent-slate-900 rounded cursor-pointer" title="Desactivar grupo">
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" checked onchange="toggleGroupEnabled('${g.id}')" class="w-4 h-4 accent-slate-900 rounded cursor-pointer">
                             <span class="text-xs font-bold px-2.5 py-1 rounded border ${g.badgeBg}">${g.label}</span>
-                            <span class="text-xs text-slate-500">${g.desc}</span>
+                            <span class="text-xs text-slate-500 hidden sm:inline">${g.desc}</span>
                             <span class="text-xs font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-200">
-                                ${count} semanas
+                                ${count} sem.
                             </span>
                         </div>
 
                         <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
-                            <button type="button" onclick="applyPreset('${g.id}', 'auto')" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-md text-indigo-700 font-semibold">
-                                <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Auto en rango
+                            <button type="button" onclick="applyPreset('${g.id}', 'auto')" class="px-2.5 py-1.5 sm:py-1 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-md text-indigo-700 font-semibold">
+                                <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Auto
                             </button>
-                            <button type="button" onclick="applyPreset('${g.id}', 'all_range')" class="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 border border-slate-300 rounded-md text-slate-700 font-medium">
+                            <button type="button" onclick="applyPreset('${g.id}', 'all_range')" class="px-2.5 py-1.5 sm:py-1 bg-slate-50 hover:bg-slate-100 border border-slate-300 rounded-md text-slate-700 font-medium">
                                 Todas (S${linea.semana_inicio}–S${linea.semana_fin})
                             </button>
-                            <button type="button" onclick="applyPreset('${g.id}', 'clear')" class="px-2.5 py-1 bg-white hover:bg-rose-50 border border-slate-300 rounded-md text-rose-600 font-medium">
+                            <button type="button" onclick="applyPreset('${g.id}', 'clear')" class="px-2.5 py-1.5 sm:py-1 bg-white hover:bg-rose-50 border border-slate-300 rounded-md text-rose-600 font-medium">
                                 Limpiar
                             </button>
                         </div>
                     </div>
 
                     <div>
-                        <div class="grid grid-cols-8 sm:grid-cols-13 md:grid-cols-16 gap-1.5">
+                        <div class="grid grid-cols-6 sm:grid-cols-10 md:grid-cols-14 lg:grid-cols-16 gap-1.5">
                             ${weeksGridHtml}
                         </div>
                     </div>
@@ -880,18 +1237,33 @@
                             <input type="text" value="${(data.mensaje_clave || '').replace(/"/g, '&quot;')}"
                                 onchange="draftComs['${g.id}'].mensaje_clave = this.value"
                                 placeholder="Ej: Avance de construcción y resultados..."
-                                class="w-full bg-slate-50 focus:bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-slate-800 outline-none">
+                                class="w-full bg-slate-50 focus:bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-slate-800 outline-none">
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Notas / Acuerdos</label>
                             <input type="text" value="${(data.notas || '').replace(/"/g, '&quot;')}"
                                 onchange="draftComs['${g.id}'].notas = this.value"
                                 placeholder="Observaciones internas..."
-                                class="w-full bg-slate-50 focus:bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-slate-800 outline-none">
+                                class="w-full bg-slate-50 focus:bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-slate-800 outline-none">
                         </div>
                     </div>
                 </div>`;
             }).join('');
+        };
+
+        // Suporte para toque longo em iPad / iPhone dentro do modal para marcar como enviada
+        let longPressTimer = null;
+        let longPressTriggered = false;
+        window.startLongPressDone = function(grupo, week) {
+            longPressTriggered = false;
+            clearTimeout(longPressTimer);
+            longPressTimer = setTimeout(() => {
+                longPressTriggered = true;
+                toggleDraftDone(grupo, week);
+            }, 480);
+        };
+        window.cancelLongPressDone = function() {
+            clearTimeout(longPressTimer);
         };
 
         window.toggleGroupEnabled = function(grupo) {
@@ -904,6 +1276,10 @@
         };
 
         window.toggleDraftWeek = function(grupo, week) {
+            if (longPressTriggered) {
+                longPressTriggered = false;
+                return;
+            }
             const arr = draftComs[grupo].semanas_marcadas;
             const idx = arr.indexOf(week);
             if (idx > -1) {
@@ -982,7 +1358,7 @@
                 .upsert(payloads, { onConflict: 'linea_id,grupo' });
 
             btn.disabled = false;
-            btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar en Supabase';
+            btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar';
 
             if (error) {
                 alert('Error al guardar en Supabase: ' + error.message);
@@ -1000,7 +1376,7 @@
         window.openNewLineaModal = function() {
             document.getElementById('ml-title').textContent = 'Nueva Línea en Hoja de Ruta 2027';
             document.getElementById('ml-id').value = '';
-            populateBloquesSelect(bloques[0]?.nombre || 'Digitalización Fase 1');
+            populateBloquesSelect(filterBloque !== 'ALL' ? filterBloque : (bloques[0]?.nombre || 'Digitalización Fase 1'));
             document.getElementById('ml-linea').value = '';
             document.getElementById('ml-inicio').value = 1;
             document.getElementById('ml-fin').value = 26;
@@ -1101,6 +1477,30 @@
             document.getElementById('modal-radar').showModal();
         };
 
+        window.toggleRadarComDone = async function(comId, week) {
+            const com = comunicaciones.find(c => c.id === comId);
+            if (!com) return;
+
+            const doneSet = new Set(com.semanas_completadas || []);
+            if (doneSet.has(week)) doneSet.delete(week);
+            else doneSet.add(week);
+
+            const updatedArr = Array.from(doneSet).sort((a, b) => a - b);
+            com.semanas_completadas = updatedArr;
+
+            renderRadarContent();
+            renderKonvaRoadmap();
+            setSyncBadge('saving');
+
+            const { error } = await supabase
+                .from('hdr_2027_comunicaciones')
+                .update({ semanas_completadas: updatedArr, updated_at: new Date().toISOString() })
+                .eq('id', comId);
+
+            if (error) setSyncBadge('error');
+            else setSyncBadge('ok');
+        };
+
         window.renderRadarContent = function() {
             const week = parseInt(document.getElementById('radar-week-select').value);
             const list = document.getElementById('radar-list');
@@ -1109,7 +1509,7 @@
             comunicaciones.forEach(c => {
                 if ((c.semanas_marcadas || []).includes(week)) {
                     const linea = lineas.find(l => l.id === c.linea_id);
-                    if (linea) {
+                    if (linea && (filterBloque === 'ALL' || linea.bloque === filterBloque)) {
                         matches.push({
                             linea,
                             com: c,
@@ -1119,7 +1519,7 @@
                 }
             });
 
-            document.getElementById('radar-count').textContent = `${matches.length} comunicaciones esta semana`;
+            document.getElementById('radar-count').textContent = `${matches.length} comunicaciones`;
 
             if (matches.length === 0) {
                 list.innerHTML = `<div class="text-center py-8 text-sm text-slate-400">No hay comunicaciones marcadas para la semana S${week}.</div>`;
@@ -1129,9 +1529,17 @@
             list.innerHTML = matches.map(m => {
                 const gCfg = GRUPOS_CONFIG.find(g => g.id === m.com.grupo);
                 return `
-                <div class="p-3.5 rounded-xl border border-slate-200 bg-white flex flex-wrap items-center justify-between gap-3 hover:border-slate-300 transition">
+                <div class="p-3.5 rounded-xl border ${m.done ? 'border-emerald-200 bg-emerald-50/40' : 'border-slate-200 bg-white'} flex flex-wrap items-center justify-between gap-3 hover:border-slate-300 transition">
                     <div class="space-y-1">
-                        <div class="flex items-center gap-2">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button type="button" onclick="toggleRadarComDone(${m.com.id}, ${week})"
+                                class="text-xs font-bold px-2.5 py-1 rounded-full border transition flex items-center gap-1
+                                ${m.done
+                                    ? 'bg-emerald-600 text-white border-emerald-700'
+                                    : 'bg-white text-slate-600 border-slate-300 hover:border-emerald-500 hover:text-emerald-700'}">
+                                <i class="fa-solid ${m.done ? 'fa-circle-check' : 'fa-regular fa-circle'}"></i>
+                                ${m.done ? 'Ejecutada' : 'Pendiente'}
+                            </button>
                             <span class="text-xs font-bold px-2 py-0.5 rounded border ${gCfg?.badgeBg || ''}">${m.com.grupo}</span>
                             <span class="text-xs font-semibold text-slate-500">${m.linea.bloque}</span>
                             <span class="text-xs text-slate-400">•</span>
@@ -1141,7 +1549,7 @@
                     </div>
                     <button onclick="openComunicacionModal(${m.linea.id}); document.getElementById('modal-radar').close();"
                         class="text-xs font-semibold text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-200">
-                        Editar en línea
+                        Editar
                     </button>
                 </div>`;
             }).join('');
@@ -1151,19 +1559,37 @@
             highlightGrupo = grupo;
             document.querySelectorAll('.gbtn').forEach(btn => {
                 if (btn.dataset.gbtn === grupo) {
-                    btn.className = 'gbtn px-2.5 py-1 rounded bg-emerald-600 text-white font-semibold transition';
+                    btn.className = 'gbtn px-2.5 py-1.5 sm:py-1 rounded bg-emerald-600 text-white font-semibold transition shrink-0';
                 } else {
-                    btn.className = 'gbtn px-2.5 py-1 rounded text-slate-300 hover:text-white transition';
+                    btn.className = 'gbtn px-2.5 py-1.5 sm:py-1 rounded text-slate-300 hover:text-white transition shrink-0';
                 }
             });
             renderKonvaRoadmap();
         };
 
+        // Fechar modais ao clicar fora no backdrop
+        document.querySelectorAll('dialog').forEach(dialog => {
+            dialog.addEventListener('click', (e) => {
+                const rect = dialog.getBoundingClientRect();
+                const isInDialog = (
+                    rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
+                    rect.left <= e.clientX && e.clientX <= rect.left + rect.width
+                );
+                if (!isInDialog) dialog.close();
+            });
+        });
+
+        let realtimeTimer = null;
+        function debouncedFetchData() {
+            clearTimeout(realtimeTimer);
+            realtimeTimer = setTimeout(() => fetchData(), 350);
+        }
+
         supabase
             .channel('hdr-2027-changes')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'hdr_2027_bloques' }, () => fetchData())
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'hdr_2027_lineas' }, () => fetchData())
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'hdr_2027_comunicaciones' }, () => fetchData())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'hdr_2027_bloques' }, () => debouncedFetchData())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'hdr_2027_lineas' }, () => debouncedFetchData())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'hdr_2027_comunicaciones' }, () => debouncedFetchData())
             .subscribe();
 
         fetchData();
