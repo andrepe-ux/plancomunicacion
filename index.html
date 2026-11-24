@@ -94,7 +94,7 @@
 
         <div class="flex items-center gap-3 text-slate-600 bg-white px-3.5 py-2 rounded-lg border border-slate-200 shadow-2xs">
             <i class="fa-solid fa-computer-mouse text-emerald-600"></i>
-            <span><strong>Clic en la barra</strong> para configurar grupos y mensajes por semana · <strong>✎ / ✕</strong> editar o eliminar línea.</span>
+            <span><strong>Clic en la barra</strong> para programar, redactar mensajes y marcar <strong>✓ Enviada</strong>.</span>
             <span id="sync-status" class="ml-2 px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-semibold border border-amber-200">
                 <i class="fa-solid fa-spinner fa-spin mr-1"></i>Conectando...
             </span>
@@ -246,7 +246,7 @@
         <div class="bg-slate-50 px-6 py-3.5 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
             <div class="text-xs text-slate-500">
                 <span class="inline-block w-3 h-3 rounded bg-indigo-600 align-middle mr-1"></span> Programada
-                <span class="inline-block w-3 h-3 rounded bg-emerald-600 align-middle ml-3 mr-1"></span> Ya comunicada (clic derecho o botón ✓)
+                <span class="inline-block w-3 h-3 rounded bg-emerald-600 align-middle ml-3 mr-1"></span> Ya comunicada (clic derecho en semana o botón <strong>✓ Enviada</strong>)
             </div>
             <div class="flex items-center gap-2">
                 <button onclick="document.getElementById('modal-comunicacion').close()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-lg transition">
@@ -344,7 +344,7 @@
     </dialog>
 
     <!-- ===================================================================== -->
-    <!-- MODAL 3: RADAR SEMANAL (¿QUÉ COMUNICAR EN CADA SEMANA ISO?)           -->
+    <!-- MODAL 3: RADAR SEMANAL (COM MARCAÇÃO DIRETA DE ENVIADA)               -->
     <!-- ===================================================================== -->
     <dialog id="modal-radar" class="rounded-2xl shadow-2xl border border-slate-200 p-0 w-full max-w-4xl bg-white text-slate-800">
         <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
@@ -352,7 +352,7 @@
                 <i class="fa-solid fa-radar text-amber-400 text-lg"></i>
                 <div>
                     <h3 class="font-bold text-base">Radar de Comunicaciones <span id="radar-year-title">2027</span> por Semana ISO</h3>
-                    <p class="text-xs text-slate-400">Consulta qué mensajes salen y a qué grupo en cualquier semana del año</p>
+                    <p class="text-xs text-slate-400">Consulta qué mensajes salen y marca directamente las comunicaciones ya realizadas</p>
                 </div>
             </div>
             <button onclick="document.getElementById('modal-radar').close()" class="text-slate-400 hover:text-white">
@@ -625,6 +625,9 @@
             if (document.getElementById('modal-grupos').open) {
                 renderGruposManagerList();
             }
+            if (document.getElementById('modal-radar').open) {
+                renderRadarContent();
+            }
             if (document.getElementById('modal-comunicacion').open && activeLineaId) {
                 syncDraftComsWithGroups();
                 rerenderModalBody();
@@ -774,7 +777,7 @@
         };
 
         // =========================================================================
-        // RENDERIZAÇÃO KONVA.JS ULTRA-FLUIDA (COM FILTRO DE BLOQUE)
+        // RENDERIZAÇÃO KONVA.JS ULTRA-FLUIDA
         // =========================================================================
         function renderKonvaRoadmap() {
             const container = document.getElementById('konva-container');
@@ -896,9 +899,12 @@
                 const gruposHtml = activos.length > 0
                     ? activos.map(c => {
                         const perWeek = c.mensajes_por_semana || {};
+                        const doneList = c.semanas_completadas || [];
                         const weeksDetail = c.semanas_marcadas.map(s => {
+                            const isDone = doneList.includes(s);
                             const specific = perWeek[String(s)];
-                            return specific ? `S${s} (${specific})` : `S${s}`;
+                            const prefix = isDone ? `✓S${s}` : `S${s}`;
+                            return specific ? `${prefix} (${specific})` : prefix;
                         }).join(', ');
                         return `
                             <div class="text-[11px] py-0.5">
@@ -914,7 +920,7 @@
                     <div class="font-bold text-white text-xs leading-snug mt-0.5">${linea.linea}</div>
                     <div class="text-[11px] font-mono text-sky-300 mt-1 pb-1.5 border-b border-slate-700">${rangeStr}</div>
                     <div class="mt-1.5 space-y-0.5">${gruposHtml}</div>
-                    <div class="text-[10px] text-slate-400 mt-2 pt-1 border-t border-slate-800">Clic para editar semanas y mensajes</div>
+                    <div class="text-[10px] text-slate-400 mt-2 pt-1 border-t border-slate-800">Clic para editar semanas, mensajes y marcar enviadas</div>
                 `;
             }
 
@@ -992,7 +998,7 @@
 
                     barsLayer.add(new Konva.Text({
                         x: cx - 8.5, y: cy - 4.5, width: 17, align: 'center',
-                        text: items.length > 1 ? `${items.length}` : items[0].grupo.substring(0, 2),
+                        text: allDone ? '✓' : (items.length > 1 ? `${items.length}` : items[0].grupo.substring(0, 2)),
                         fontSize: 8.5, fontStyle: 'bold', fill: '#ffffff', fontFamily: 'sans-serif',
                         listening: false
                     }));
@@ -1149,7 +1155,7 @@
         };
 
         // =========================================================================
-        // MODAL 1: CONFIGURAR GRUPOS, SEMANAS E MENSAGENS POR SEMANA
+        // MODAL 1: CONFIGURAR GRUPOS, SEMANAS E MARCAÇÃO DE ENVIADAS
         // =========================================================================
         function syncDraftComsWithGroups() {
             gruposList.forEach(g => {
@@ -1230,6 +1236,7 @@
                 const data = draftComs[g.id];
                 const isEnabled = data.enabled;
                 const count = data.semanas_marcadas.length;
+                const doneCount = data.semanas_completadas.filter(w => data.semanas_marcadas.includes(w)).length;
 
                 if (!isEnabled) {
                     return `
@@ -1265,7 +1272,7 @@
                         <button type="button"
                             onclick="toggleDraftWeek('${safeG}', ${s})"
                             oncontextmenu="event.preventDefault(); toggleDraftDone('${safeG}', ${s})"
-                            title="S${s} (${getMesByWeek(s)}) · Clic: Marcar/Quitar | Clic derecho: Marcar como enviada"
+                            title="S${s} (${getMesByWeek(s)}) · Clic: Programar/Quitar | Clic derecho: Marcar como enviada"
                             class="relative h-8 px-1 text-[11px] font-mono rounded-md border transition flex items-center justify-center ${btnClass}">
                             ${isDone ? `✓ S${s}` : `S${s}`}
                             ${hasMsg ? `<span class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-400 ring-1 ring-white"></span>` : ''}
@@ -1275,29 +1282,34 @@
 
                 const perWeekInputsHtml = data.semanas_marcadas.length > 0
                     ? `
-                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
-                        <div class="flex items-center justify-between">
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2.5">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
                             <span class="text-[11px] font-bold uppercase text-slate-600">
-                                <i class="fa-solid fa-comment-dots text-indigo-600 mr-1"></i>¿Qué comunicar en cada semana marcada?
+                                <i class="fa-solid fa-comment-dots text-indigo-600 mr-1"></i>Detalle y estado por semana marcada
                             </span>
-                            <span class="text-[10px] text-slate-400">Si se deja vacío, usará el mensaje general de abajo</span>
+                            <span class="text-[11px] text-slate-500">Pulsa <strong>Pendiente / ✓ Enviada</strong> para marcar las comunicaciones realizadas</span>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                             ${data.semanas_marcadas.map(s => {
                                 const isDone = data.semanas_completadas.includes(s);
                                 const weekMsg = ((data.mensajes_por_semana || {})[String(s)] || '').replace(/"/g, '&quot;');
                                 return `
-                                <div class="flex items-center gap-1.5 bg-white border ${isDone ? 'border-emerald-300 bg-emerald-50/30' : 'border-slate-200'} rounded-lg px-2 py-1.5">
-                                    <button type="button" onclick="toggleDraftDone('${safeG}', ${s})" title="Marcar/desmarcar semana como enviada"
-                                        class="px-2 py-0.5 rounded font-mono text-[11px] font-bold shrink-0 transition
-                                        ${isDone ? 'bg-emerald-600 text-white' : 'bg-indigo-100 text-indigo-800 hover:bg-indigo-200'}">
-                                        ${isDone ? `✓ S${s}` : `S${s}`}
-                                    </button>
+                                <div class="flex items-center gap-2 bg-white border ${isDone ? 'border-emerald-400 bg-emerald-50/40' : 'border-slate-200'} rounded-lg px-2.5 py-1.5">
+                                    <span class="font-mono text-xs font-bold text-slate-800 shrink-0">S${s}</span>
                                     <span class="text-[10px] text-slate-400 font-medium shrink-0">${getMesByWeek(s)}</span>
                                     <input type="text" value="${weekMsg}"
                                         oninput="setWeekSpecificMessage('${safeG}', ${s}, this.value)"
-                                        placeholder="Mensaje específico para S${s}..."
+                                        placeholder="Qué comunicar en S${s}..."
                                         class="w-full text-xs text-slate-800 bg-transparent focus:outline-none px-1">
+                                    <button type="button" onclick="toggleDraftDone('${safeG}', ${s})"
+                                        title="Cambiar estado entre Pendiente y Enviada"
+                                        class="px-2.5 py-1 rounded-md text-[11px] font-bold shrink-0 border transition flex items-center gap-1
+                                        ${isDone
+                                            ? 'bg-emerald-600 text-white border-emerald-700 hover:bg-emerald-700'
+                                            : 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300'}">
+                                        <i class="fa-solid ${isDone ? 'fa-circle-check' : 'fa-clock'}"></i>
+                                        <span>${isDone ? 'Enviada' : 'Pendiente'}</span>
+                                    </button>
                                 </div>`;
                             }).join('')}
                         </div>
@@ -1312,7 +1324,7 @@
                             <span class="text-xs font-bold px-2.5 py-1 rounded text-white" style="background-color:${g.color}">${g.label}</span>
                             <span class="text-xs text-slate-500">${g.desc || ''}</span>
                             <span class="text-xs font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-200">
-                                ${count} semanas
+                                ${count} prog. · ${doneCount} env.
                             </span>
                         </div>
 
@@ -1445,7 +1457,7 @@
                     linea_id: item.linea_id,
                     grupo: item.grupo,
                     semanas_marcadas: item.enabled ? item.semanas_marcadas : [],
-                    semanas_completadas: item.enabled ? item.semanas_completadas : [],
+                    semanas_completadas: item.enabled ? item.semanas_completadas.filter(w => item.semanas_marcadas.includes(w)) : [],
                     mensajes_por_semana: cleanPerWeek,
                     mensaje_clave: item.enabled ? item.mensaje_clave : '',
                     notas: item.enabled ? item.notas : '',
@@ -1567,8 +1579,31 @@
         };
 
         // =========================================================================
-        // MODAL 3: RADAR SEMANAL (RESPEITA O FILTRO DE BLOQUE)
+        // MODAL 3: RADAR SEMANAL (COM TOGGLE DIRETO DE ENVIADA)
         // =========================================================================
+        window.toggleRadarWeekDone = async function(comId, week) {
+            const com = comunicaciones.find(c => c.id === comId);
+            if (!com) return;
+
+            const currentDone = [...(com.semanas_completadas || [])];
+            const idx = currentDone.indexOf(week);
+            if (idx > -1) currentDone.splice(idx, 1);
+            else currentDone.push(week);
+
+            setSyncBadge('saving');
+            const { error } = await supabase
+                .from('hdr_2027_comunicaciones')
+                .update({ semanas_completadas: currentDone, updated_at: new Date().toISOString() })
+                .eq('id', comId);
+
+            if (error) {
+                alert('Error al actualizar estado: ' + error.message);
+                setSyncBadge('error');
+                return;
+            }
+            await fetchData();
+        };
+
         window.openRadarModal = function() {
             document.getElementById('radar-year-title').textContent = selectedYear;
             const sel = document.getElementById('radar-week-select');
@@ -1625,11 +1660,10 @@
             list.innerHTML = matches.map(m => {
                 const gCfg = getGrupoCfg(m.com.grupo);
                 return `
-                <div class="p-3.5 rounded-xl border ${m.done ? 'border-emerald-200 bg-emerald-50/40' : 'border-slate-200 bg-white'} flex flex-wrap items-center justify-between gap-3 hover:border-slate-300 transition">
-                    <div class="space-y-1">
+                <div class="p-3.5 rounded-xl border ${m.done ? 'border-emerald-300 bg-emerald-50/40' : 'border-slate-200 bg-white'} flex flex-wrap items-center justify-between gap-3 hover:border-slate-300 transition">
+                    <div class="space-y-1 flex-1 min-w-[240px]">
                         <div class="flex flex-wrap items-center gap-2">
                             <span class="text-xs font-bold px-2 py-0.5 rounded text-white" style="background-color:${gCfg.color}">${m.com.grupo}</span>
-                            ${m.done ? `<span class="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">✓ Enviada</span>` : ''}
                             <span class="text-xs font-semibold text-slate-500">${m.linea.bloque}</span>
                             <span class="text-xs text-slate-400">•</span>
                             <span class="text-xs font-bold text-slate-800">${m.linea.linea}</span>
@@ -1640,10 +1674,20 @@
                                 : '<em class="text-slate-400">Sin mensaje definido</em>'}
                         </p>
                     </div>
-                    <button onclick="openComunicacionModal(${m.linea.id}); document.getElementById('modal-radar').close();"
-                        class="text-xs font-semibold text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-200">
-                        Editar en línea
-                    </button>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button type="button" onclick="toggleRadarWeekDone(${m.com.id}, ${week})"
+                            class="text-xs font-bold px-3 py-1.5 rounded-lg border transition flex items-center gap-1.5
+                            ${m.done
+                                ? 'bg-emerald-600 text-white border-emerald-700 hover:bg-emerald-700'
+                                : 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-emerald-600 hover:text-white hover:border-emerald-700'}">
+                            <i class="fa-solid ${m.done ? 'fa-circle-check' : 'fa-check'}"></i>
+                            <span>${m.done ? '✓ Enviada' : 'Marcar enviada'}</span>
+                        </button>
+                        <button onclick="openComunicacionModal(${m.linea.id}); document.getElementById('modal-radar').close();"
+                            class="text-xs font-semibold text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-200">
+                            Editar línea
+                        </button>
+                    </div>
                 </div>`;
             }).join('');
         };
