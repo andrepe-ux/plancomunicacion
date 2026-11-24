@@ -86,10 +86,10 @@
         </div>
     </header>
 
-    <!-- Legenda Dinâmica e Instruções -->
+    <!-- Filtro Interactivo de Bloques e Instruções -->
     <div class="max-w-[1680px] w-full mx-auto px-4 pt-4 pb-2 flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div id="bloques-legend" class="flex flex-wrap items-center gap-4 bg-white px-3.5 py-2 rounded-lg border border-slate-200 shadow-2xs">
-            <span class="font-bold text-slate-600 uppercase tracking-wider text-[11px]">Bloques:</span>
+        <div id="bloques-legend" class="flex flex-wrap items-center gap-2 bg-white px-3.5 py-2 rounded-lg border border-slate-200 shadow-2xs">
+            <span class="font-bold text-slate-600 uppercase tracking-wider text-[11px] mr-1">Filtrar Bloque:</span>
         </div>
 
         <div class="flex items-center gap-3 text-slate-600 bg-white px-3.5 py-2 rounded-lg border border-slate-200 shadow-2xs">
@@ -122,7 +122,6 @@
             </button>
         </div>
         <div class="p-6 space-y-5 max-h-[78vh] overflow-y-auto">
-            <!-- Formulário Novo Grupo -->
             <form onsubmit="submitNewGrupoForm(event)" class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
                 <div class="text-xs font-bold uppercase text-slate-700">Añadir Nuevo Grupo</div>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
@@ -156,7 +155,6 @@
                 </div>
             </form>
 
-            <!-- Lista de Grupos Existentes -->
             <div>
                 <div class="text-xs font-bold uppercase text-slate-500 mb-2">Grupos disponibles</div>
                 <div id="mg-list" class="space-y-2"></div>
@@ -365,6 +363,7 @@
             <div class="flex flex-wrap items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
                 <label class="text-xs font-bold uppercase text-slate-600">Seleccionar Semana ISO:</label>
                 <select id="radar-week-select" onchange="renderRadarContent()" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm font-mono font-bold bg-white"></select>
+                <span id="radar-bloque-badge" class="hidden text-xs font-bold px-2.5 py-1 rounded-full text-white"></span>
                 <span id="radar-count" class="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 ml-auto"></span>
             </div>
             <div id="radar-list" class="space-y-2.5"></div>
@@ -378,7 +377,7 @@
         const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_UtZgC_cW0Oyz1zHRcWvKeA_8ODEj3jM';
         const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
-        // Estado Global Multi-Ano + Grupos Dinâmicos
+        // Estado Global Multi-Ano + Grupos Dinâmicos + Filtro de Bloque
         let selectedYear = parseInt(localStorage.getItem('hdr_selected_year')) || 2027;
         let availableYears = [2027];
         let allBloques = [];
@@ -388,6 +387,7 @@
         let comunicaciones = [];
         let gruposList = [];
         let highlightGrupo = 'ALL';
+        let filterBloque = 'ALL';
         let activeLineaId = null;
         let draftComs = {};
 
@@ -482,14 +482,19 @@
                     bloques.push({ nombre: l.bloque, color: '#475569', anio: selectedYear });
                 }
             });
+
+            if (filterBloque !== 'ALL' && !bloques.some(b => b.nombre === filterBloque)) {
+                filterBloque = 'ALL';
+            }
         }
 
         window.changeSelectedYear = function(yearStr) {
             selectedYear = parseInt(yearStr);
             localStorage.setItem('hdr_selected_year', selectedYear);
+            filterBloque = 'ALL';
             syncYearsDropdown();
             applyYearFilter();
-            renderBloquesLegend();
+            renderBloquesFilterBar();
             populateBloquesSelect();
             renderKonvaRoadmap();
         };
@@ -590,7 +595,6 @@
             allLineas = resL.data || [];
             comunicaciones = resC.data || [];
 
-            // Consolidar grupos da base de dados + grupos usados nas comunicações
             const dbGrupos = (resG.data && resG.data.length > 0)
                 ? resG.data.map(g => ({
                     dbId: g.id,
@@ -614,7 +618,7 @@
 
             setSyncBadge('ok');
             renderGruposFilterBar();
-            renderBloquesLegend();
+            renderBloquesFilterBar();
             populateBloquesSelect();
             renderKonvaRoadmap();
 
@@ -644,15 +648,51 @@
                 `).join('');
         }
 
-        function renderBloquesLegend() {
+        // =========================================================================
+        // FILTRO INTERATIVO POR BLOQUES
+        // =========================================================================
+        window.setFilterBloque = function(bloqueNombre) {
+            filterBloque = bloqueNombre;
+            renderBloquesFilterBar();
+            renderKonvaRoadmap();
+        };
+
+        function renderBloquesFilterBar() {
             const container = document.getElementById('bloques-legend');
-            container.innerHTML = `<span class="font-bold text-slate-600 uppercase tracking-wider text-[11px]">Bloques (${selectedYear}):</span>` +
-                bloques.map(b => `
-                    <span class="flex items-center gap-1.5">
-                        <span class="w-3 h-3 rounded-sm" style="background-color: ${b.color}"></span>
-                        ${b.nombre}
-                    </span>
-                `).join('');
+            const totalCount = lineas.length;
+            const isAll = filterBloque === 'ALL';
+
+            let html = `<span class="font-bold text-slate-600 uppercase tracking-wider text-[11px] mr-1">Bloques (${selectedYear}):</span>`;
+
+            html += `
+                <button type="button" onclick="setFilterBloque('ALL')"
+                    class="px-2.5 py-1 rounded-md text-xs font-bold border transition flex items-center gap-1.5
+                    ${isAll
+                        ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
+                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">
+                    <span>Todos</span>
+                    <span class="text-[10px] px-1.5 rounded-full ${isAll ? 'bg-slate-700 text-slate-200' : 'bg-slate-200 text-slate-600'}">${totalCount}</span>
+                </button>
+            `;
+
+            html += bloques.map(b => {
+                const count = lineas.filter(l => l.bloque === b.nombre).length;
+                const active = filterBloque === b.nombre;
+                return `
+                    <button type="button" onclick="setFilterBloque('${b.nombre.replace(/'/g, "\\'")}')"
+                        style="${active ? `background-color: ${b.color}; border-color: ${b.color}; color: #ffffff;` : ''}"
+                        class="px-2.5 py-1 rounded-md text-xs font-semibold border transition flex items-center gap-1.5
+                        ${active
+                            ? 'shadow-xs font-bold'
+                            : 'bg-white text-slate-700 border-slate-200 hover:border-slate-400'}">
+                        <span class="w-2.5 h-2.5 rounded-sm shrink-0 ${active ? 'ring-2 ring-white/80' : ''}" style="background-color: ${b.color}"></span>
+                        <span>${b.nombre}</span>
+                        <span class="text-[10px] px-1.5 rounded-full ${active ? 'bg-black/20 text-white' : 'bg-slate-100 text-slate-500'}">${count}</span>
+                    </button>
+                `;
+            }).join('');
+
+            container.innerHTML = html;
         }
 
         function populateBloquesSelect(selectedValue = null) {
@@ -711,7 +751,7 @@
                 .upsert([{ nombre, descripcion, color, orden: gruposList.length + 1 }], { onConflict: 'nombre' });
 
             if (error) {
-                alert('Error al guardar el grupo (verifica que ejecutaste el SQL de "hdr_2027_grupos"): ' + error.message);
+                alert('Error al guardar el grupo: ' + error.message);
                 setSyncBadge('error', 'Error SQL');
                 return;
             }
@@ -734,14 +774,21 @@
         };
 
         // =========================================================================
-        // RENDERIZAÇÃO KONVA.JS ULTRA-FLUIDA
+        // RENDERIZAÇÃO KONVA.JS ULTRA-FLUIDA (COM FILTRO DE BLOQUE)
         // =========================================================================
         function renderKonvaRoadmap() {
             const container = document.getElementById('konva-container');
             container.innerHTML = '';
 
-            if (lineas.length === 0) {
-                container.innerHTML = `<div class="p-12 text-center text-slate-500 text-sm">No hay líneas en la Hoja de Ruta <strong>${selectedYear}</strong>. Pulsa <strong>"Nueva Línea HdR"</strong> para empezar.</div>`;
+            const visibleLineas = filterBloque === 'ALL'
+                ? lineas
+                : lineas.filter(l => l.bloque === filterBloque);
+
+            if (visibleLineas.length === 0) {
+                const msg = lineas.length === 0
+                    ? `No hay líneas en la Hoja de Ruta <strong>${selectedYear}</strong>. Pulsa <strong>"Nueva Línea HdR"</strong> para empezar.`
+                    : `No hay líneas registradas dentro del bloque <strong>"${filterBloque}"</strong> en ${selectedYear}.`;
+                container.innerHTML = `<div class="p-12 text-center text-slate-500 text-sm">${msg}</div>`;
                 return;
             }
 
@@ -751,7 +798,7 @@
             const headerHeight = 56;
             const rowHeight = 46;
             const stageWidth = leftColWidth + (weekWidth * totalWeeks) + 20;
-            const stageHeight = headerHeight + (lineas.length * rowHeight) + 20;
+            const stageHeight = headerHeight + (visibleLineas.length * rowHeight) + 20;
 
             const stage = new Konva.Stage({
                 container: 'konva-container',
@@ -778,10 +825,17 @@
                 fill: '#f8fafc'
             }));
 
+            const colHeaderLabel = filterBloque === 'ALL'
+                ? `BLOQUE / LÍNEA HOJA DE RUTA ${selectedYear}`
+                : `${filterBloque.toUpperCase()} · ${selectedYear}`;
+
             gridLayer.add(new Konva.Text({
-                x: 16, y: 18,
-                text: `BLOQUE / LÍNEA HOJA DE RUTA ${selectedYear}`,
-                fontSize: 11, fontStyle: 'bold', fill: '#475569', fontFamily: 'sans-serif'
+                x: 16, y: 18, width: leftColWidth - 28,
+                text: colHeaderLabel,
+                fontSize: 11, fontStyle: 'bold',
+                fill: filterBloque === 'ALL' ? '#475569' : getBloqueColor(filterBloque),
+                fontFamily: 'sans-serif',
+                ellipsis: true, wrap: 'none'
             }));
 
             MESES.forEach((mes, idx) => {
@@ -864,7 +918,7 @@
                 `;
             }
 
-            lineas.forEach((linea, index) => {
+            visibleLineas.forEach((linea, index) => {
                 const y = headerHeight + index * rowHeight;
                 const color = getBloqueColor(linea.bloque);
                 const lineComs = comunicaciones.filter(c => c.linea_id === linea.id);
@@ -1219,7 +1273,6 @@
                     `;
                 }
 
-                // Painel detalhado: O que comunicar em CADA semana selecionada
                 const perWeekInputsHtml = data.semanas_marcadas.length > 0
                     ? `
                     <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
@@ -1366,7 +1419,6 @@
                 } else if (grupo === 'CdM') {
                     weeks = start === end ? [start] : [start, end];
                 } else {
-                    // Grupos personalizados: inicio, mitad (si > 8 semanas) y fin
                     weeks = start === end ? [start] : [start, end];
                 }
                 draftComs[grupo].semanas_marcadas = weeks;
@@ -1381,7 +1433,6 @@
             setSyncBadge('saving');
 
             const payloads = Object.values(draftComs).map(item => {
-                // Limpar mensagens de semanas que já não estejam marcadas
                 const cleanPerWeek = {};
                 if (item.enabled && item.mensajes_por_semana) {
                     item.semanas_marcadas.forEach(s => {
@@ -1410,7 +1461,7 @@
             btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar en Supabase';
 
             if (error) {
-                alert('Error al guardar en Supabase (verifica que añadiste la columna "mensajes_por_semana"): ' + error.message);
+                alert('Error al guardar en Supabase: ' + error.message);
                 setSyncBadge('error');
                 return;
             }
@@ -1425,7 +1476,8 @@
         window.openNewLineaModal = function() {
             document.getElementById('ml-title').textContent = `Nueva Línea en Hoja de Ruta ${selectedYear}`;
             document.getElementById('ml-id').value = '';
-            populateBloquesSelect(bloques[0]?.nombre || 'Digitalización Fase 1');
+            const defaultBloque = filterBloque !== 'ALL' ? filterBloque : (bloques[0]?.nombre || 'Digitalización Fase 1');
+            populateBloquesSelect(defaultBloque);
             document.getElementById('ml-linea').value = '';
             document.getElementById('ml-inicio').value = 1;
             document.getElementById('ml-fin').value = 26;
@@ -1515,7 +1567,7 @@
         };
 
         // =========================================================================
-        // MODAL 3: RADAR SEMANAL (COM MENSAGEM ESPECÍFICA DA SEMANA)
+        // MODAL 3: RADAR SEMANAL (RESPEITA O FILTRO DE BLOQUE)
         // =========================================================================
         window.openRadarModal = function() {
             document.getElementById('radar-year-title').textContent = selectedYear;
@@ -1536,12 +1588,21 @@
         window.renderRadarContent = function() {
             const week = parseInt(document.getElementById('radar-week-select').value);
             const list = document.getElementById('radar-list');
-            const matches = [];
+            const bloqueBadge = document.getElementById('radar-bloque-badge');
 
+            if (filterBloque !== 'ALL') {
+                bloqueBadge.textContent = `Bloque: ${filterBloque}`;
+                bloqueBadge.style.backgroundColor = getBloqueColor(filterBloque);
+                bloqueBadge.classList.remove('hidden');
+            } else {
+                bloqueBadge.classList.add('hidden');
+            }
+
+            const matches = [];
             comunicaciones.forEach(c => {
                 if ((c.semanas_marcadas || []).includes(week)) {
                     const linea = lineas.find(l => l.id === c.linea_id);
-                    if (linea) {
+                    if (linea && (filterBloque === 'ALL' || linea.bloque === filterBloque)) {
                         const specificMsg = (c.mensajes_por_semana || {})[String(week)];
                         matches.push({
                             linea,
@@ -1557,7 +1618,7 @@
             document.getElementById('radar-count').textContent = `${matches.length} comunicaciones esta semana`;
 
             if (matches.length === 0) {
-                list.innerHTML = `<div class="text-center py-8 text-sm text-slate-400">No hay comunicaciones marcadas para la semana S${week} de ${selectedYear}.</div>`;
+                list.innerHTML = `<div class="text-center py-8 text-sm text-slate-400">No hay comunicaciones marcadas para la semana S${week} de ${selectedYear}${filterBloque !== 'ALL' ? ` en "${filterBloque}"` : ''}.</div>`;
                 return;
             }
 
